@@ -12,6 +12,11 @@ public class MainController {
 
     @RequestMapping("/")
     public String main(){
-        return "Hello world! <Br>"+ SecurityContextHolder.getContext().getAuthentication().toString();
+        return "Hello world!";
+    }
+
+    @RequestMapping("/me")
+    public String me(){
+        return SecurityContextHolder.getContext().getAuthentication().getCredentials().toString();
     }
 }

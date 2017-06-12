@@ -4,6 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -30,6 +31,14 @@ public class User {
     @Size(min = 4, max = 50)
     private String surname;
 
+    @Column(name = "enabled")
+    @NotNull
+    private Boolean enabled = true;
+
+    @Column(name = "registered")
+    @NotNull
+    private Date registered;
+
     @Column(name = "password")
     @NotNull
     private String password;
@@ -39,17 +48,19 @@ public class User {
             name = "user_roles",
             joinColumns = {@JoinColumn(name = "user", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "role", referencedColumnName = "id")})
-    private List<Role> authorities = new ArrayList<>();
+    private List<Role> roles = new ArrayList<>();
 
     public User() {
     }
 
-    public User(String nickname, String name, String surname, String password, List<Role> authorities) {
+    public User(String nickname, String name, String surname, String password, List<Role> roles, boolean enabled, Date registered) {
         this.nickname = nickname;
         this.name = name;
         this.surname = surname;
         this.password = password;
-        this.authorities = authorities;
+        this.roles = roles;
+        this.enabled = enabled;
+        this.registered = registered;
     }
 
     public Long getId() {
@@ -92,11 +103,31 @@ public class User {
         this.password = password;
     }
 
-    public List<Role> getAuthorities() {
-        return authorities;
+    public List<Role> getRoles() {
+        return roles;
     }
 
-    public void setAuthorities(List<Role> authorities) {
-        this.authorities = authorities;
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
+
+    public Boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Date getRegistered() {
+        return registered;
+    }
+
+    public void setRegistered(Date registered) {
+        this.registered = registered;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
     }
 }

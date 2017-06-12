@@ -22,9 +22,11 @@ import javax.servlet.http.HttpServletResponse;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;//TokenUserServiceImpl
 
 
     public SecurityConfig() {
@@ -44,12 +46,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         ;
     }
 
-
-
-    @Bean
     @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return this.authenticationManager;
     }
 
     @Override

@@ -8,9 +8,9 @@ import java.util.Date;
 
 public class Token {
 
-    private static final SignatureAlgorithm defaultAlgorithm = SignatureAlgorithm.RS512;
+    private static final SignatureAlgorithm defaultAlgorithm = SignatureAlgorithm.HS512;
     private static final long defaultExpiration = 7 * 24 * 60 * 60 * 1000;
-    private static final String secretKey = "LM2BTRMFN4m2NFvp6zpWrkG2kCUnesE37ExvkgJp5Mryt27T3hwJTaNZRz";
+    private static final String secretKey = "tYg5gzmHNww923C8bq3gKtnCb3jqdHNsHeZu83pVAVx7BZFN6PZFSFREdCvsJqwJre95Pte";
     private static final String defaultIssuer = "network.ubublik.esy.es";
     private static final String defaultAudience = "client";
 
@@ -44,10 +44,10 @@ public class Token {
     public String toString() {
         return Jwts.builder()
                 .setSubject(username)
-                .signWith(algorithm, secretKey)
-                .setExpiration(expirationDate)
                 .setAudience(audience)
                 .setIssuer(issuer)
+                .signWith(algorithm, secretKey)
+                .setExpiration(expirationDate)
                 .compact();
     }
 
