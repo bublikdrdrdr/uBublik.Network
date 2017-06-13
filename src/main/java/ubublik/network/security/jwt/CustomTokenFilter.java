@@ -26,7 +26,7 @@ public class CustomTokenFilter extends OncePerRequestFilter{
     @Autowired
     TokenUserService tokenUserService;
 
-    public static final String tokenHeader = "TokenHeader";
+    public static final String tokenHeader = "authorization";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -34,7 +34,7 @@ public class CustomTokenFilter extends OncePerRequestFilter{
         String username = null;
         Token token = tokenUtil.parse(authToken);
         if (token!=null) username = token.getUsername();
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (username != null/* && SecurityContextHolder.getContext().getAuthentication() == null*/) {
             TokenUser tokenUser = this.tokenUserService.loadUserByUsername(username);
             if (tokenUtil.validate(authToken, tokenUser)) {
                 UsernamePasswordAuthenticationToken authentication

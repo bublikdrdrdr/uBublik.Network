@@ -3,6 +3,8 @@ package ubublik.network.models.dao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 import ubublik.network.db.HibernateUtil;
 import ubublik.network.exceptions.DuplicateUsernameException;
@@ -12,6 +14,7 @@ import ubublik.network.models.RoleName;
 import ubublik.network.models.User;
 import ubublik.network.services.UserDataValidator;
 
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -31,17 +34,21 @@ public class UserDao{
     @Autowired
     RoleDao roleDao;
 
-    public User getUserByNickname(String nickname){
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    
+
+    public User getUserByNickname(String nickname)throws UsernameNotFoundException{
         try {
             Session session = HibernateUtil.getSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
             Root<User> root = criteriaQuery.from(User.class);
-            criteriaQuery.select(
-                    criteriaQuery.from(User.class))
-                    .where(criteriaBuilder.equal(root.get("nickname"), nickname));
+            criteriaQuery.where(criteriaBuilder.equal(root.get("nickname"), nickname));
             User user = session.createQuery(criteriaQuery).getSingleResult();
             return user;
+        }catch (NoResultException nre){
+            throw new UsernameNotFoundException("Username not found");
         } catch (Exception e){
             return null;
         }
@@ -54,9 +61,17 @@ public class UserDao{
         User existingUser = getUserByNickname(userData.getNickname());
         if (existingUser!=null) throw new DuplicateUsernameException("Username already taken");
 
-        if (userDataValidator.validate(UserDataValidator.DataType.NICKNAME, userData.getNickname()))
+        if (!userDataValidator.validate(UserDataValidator.DataType.NICKNAME, userData.getNickname()))
             throw new UserDataFormatException("Bad username format");
-        // TODO: 12-Jun-17 check all user data
+        if (!userDataValidator.validate(UserDataValidator.DataType.NAME, userData.getName()))
+            throw new UserDataFormatException("Bad name format");
+        if (!userDataValidator.validate(UserDataValidator.DataType.NAME, userData.getSurname()))
+            throw new UserDataFormatException("Bad surname format");
+        if (!userDataValidator.validate(UserDataValidator.DataType.PASSWORD, userData.getPassword()))
+            throw new UserDataFormatException("Bad password format");
+
+        String passwordHash = passwordEncoder.encode(userData.getPassword());
+        userData.setPassword(passwordHash);
 
         Session session = HibernateUtil.getSessionFactory().openSession();
         User user = new User(

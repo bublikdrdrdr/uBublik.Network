@@ -4,14 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import ubublik.network.security.jwt.CustomTokenFilter;
 
@@ -51,22 +48,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return this.authenticationManager;
     }
 
-    @Override
+    //commented cause of custom authentication manager implementation
+    /*@Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth
                 .userDetailsService(this.userDetailsService)
                 .passwordEncoder(getPasswordEncoder());
-    }
+    }*/
 
-    @Override
+    /*@Override
     protected UserDetailsService userDetailsService() {
         return this.userDetailsService;
-    }
-
-    @Bean
-    public PasswordEncoder getPasswordEncoder(){
-        return new BCryptPasswordEncoder(10);
-    }
+    }*/
 
     @Bean
     public CustomTokenFilter getFilter(){

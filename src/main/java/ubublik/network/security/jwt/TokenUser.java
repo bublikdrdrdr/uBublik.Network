@@ -3,6 +3,7 @@ package ubublik.network.security.jwt;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ubublik.network.models.User;
 
 import java.util.Collection;
 import java.util.Date;
@@ -17,21 +18,32 @@ public class TokenUser implements UserDetails {
     private final String firstname;
     private final String lastname;
     private final String password;
-    private final String email;
     private final Collection<? extends GrantedAuthority> authorities;
     private final boolean enabled;
     private final Date lastPasswordResetDate;
 
-    public TokenUser(Long id, String username, String firstname, String lastname, String password, String email, Collection<? extends GrantedAuthority> authorities, boolean enabled, Date lastPasswordResetDate) {
+    public TokenUser(Long id, String username, String firstname, String lastname, String password, Collection<? extends GrantedAuthority> authorities, boolean enabled, Date lastPasswordResetDate) {
         this.id = id;
         this.username = username;
         this.firstname = firstname;
         this.lastname = lastname;
         this.password = password;
-        this.email = email;
         this.authorities = authorities;
         this.enabled = enabled;
         this.lastPasswordResetDate = lastPasswordResetDate;
+    }
+
+    public TokenUser(User user){
+        this(
+                user.getId(),
+                user.getNickname(),
+                user.getName(),
+                user.getSurname(),
+                user.getPassword(),
+                TokenUtil.mapToGrantedAuthorities(user.getRoles()),
+                user.getEnabled(),
+                new Date()// TODO: 13-Jun-17 add column to DB
+        );
     }
 
     @JsonIgnore
@@ -68,10 +80,6 @@ public class TokenUser implements UserDetails {
 
     public String getLastname() {
         return lastname;
-    }
-
-    public String getEmail() {
-        return email;
     }
 
     @JsonIgnore

@@ -7,16 +7,12 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ubublik.network.models.Role;
 import ubublik.network.models.User;
 import ubublik.network.models.dao.UserDao;
+import ubublik.network.security.jwt.TokenUtil;
 import ubublik.network.services.TokenUserService;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AuthenticationManagerImpl implements AuthenticationManager {
@@ -26,6 +22,9 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
 
     @Autowired
     UserDao userDao;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -38,17 +37,10 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
         if (!user.isEnabled()) {
             throw new DisabledException("User account has been disabled");
         }
-        if (!password.equals(user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Wrong password");
         }
         return new UsernamePasswordAuthenticationToken(username,
-                password, mapToGrantedAuthorities(user.getAuthorities()));
-    }
-
-
-    private static List<GrantedAuthority> mapToGrantedAuthorities(List<Role> roles) {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toList());
+                password, TokenUtil.mapToGrantedAuthorities(user.getRoles()));
     }
 }

@@ -21,15 +21,19 @@ public class UserController {
     @Autowired
     UserDao userDao;
 
+
+    //returns id or conflict/bad_request http status with error message
+
     @RequestMapping(value = "/registration", method = RequestMethod.POST)
     public ResponseEntity<String> registerAccount(@RequestBody User user){
         try {
-            userDao.registerUser(user);
-            return ResponseEntity.ok("OK");
+            long id = userDao.registerUser(user);
+            return ResponseEntity.ok(Long.toString(id));
         } catch (DuplicateUsernameException due){
             return ResponseEntity.status(HttpStatus.CONFLICT).body(due.getMessage());
         } catch (UserDataFormatException udfe){
             return ResponseEntity.badRequest().body(udfe.getMessage());
         }
     }
+
 }

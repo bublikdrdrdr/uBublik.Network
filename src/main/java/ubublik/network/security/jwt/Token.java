@@ -46,15 +46,15 @@ public class Token {
                 .setSubject(username)
                 .setAudience(audience)
                 .setIssuer(issuer)
-                .signWith(algorithm, secretKey)
                 .setExpiration(expirationDate)
+                .signWith(algorithm, secretKey)
                 .compact();
     }
 
     public static Token parse(String token){
         Claims claims = Jwts.parser()
                 .setSigningKey(secretKey)
-                .parseClaimsJwt(token).getBody();
+                .parseClaimsJws(token).getBody();
         return new Token(claims.getSubject(), defaultAlgorithm, claims.getExpiration(), claims.getIssuer(), claims.getAudience());
     }
 
