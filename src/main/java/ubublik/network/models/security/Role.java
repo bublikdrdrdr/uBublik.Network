@@ -1,4 +1,4 @@
-package ubublik.network.models;
+package ubublik.network.models.security;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

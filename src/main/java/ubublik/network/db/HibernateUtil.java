@@ -7,8 +7,8 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
-import ubublik.network.models.Role;
-import ubublik.network.models.User;
+import ubublik.network.models.security.Role;
+import ubublik.network.models.security.User;
 
 import java.util.HashMap;
 import java.util.Map;

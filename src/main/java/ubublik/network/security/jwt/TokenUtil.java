@@ -4,7 +4,7 @@ package ubublik.network.security.jwt;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import ubublik.network.models.Role;
+import ubublik.network.models.security.Role;
 
 import java.util.Date;
 import java.util.List;

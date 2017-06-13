@@ -1,4 +1,4 @@
-package ubublik.network.models;
+package ubublik.network.models.security;
 
 /**
  * Created by Bublik on 10-Jun-17.

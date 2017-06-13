@@ -7,7 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ubublik.network.exceptions.UnauthorizedException;
-import ubublik.network.models.dao.UserDao;
+import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.security.jwt.TokenUser;
 
 @Service

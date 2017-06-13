@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import ubublik.network.exceptions.DuplicateUsernameException;
 import ubublik.network.exceptions.UserDataFormatException;
-import ubublik.network.models.User;
-import ubublik.network.models.dao.UserDao;
+import ubublik.network.models.security.User;
+import ubublik.network.models.security.dao.UserDao;
 
 /**
  * Created by Bublik on 12-Jun-17.

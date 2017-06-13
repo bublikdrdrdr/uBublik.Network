@@ -1,8 +1,8 @@
-package ubublik.network.models.dao;
+package ubublik.network.models.security.dao;
 
 import org.springframework.stereotype.Repository;
-import ubublik.network.models.Role;
-import ubublik.network.models.RoleName;
+import ubublik.network.models.security.Role;
+import ubublik.network.models.security.RoleName;
 
 import javax.transaction.Transactional;
 import java.util.List;

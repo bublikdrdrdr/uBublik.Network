@@ -1,4 +1,4 @@
-package ubublik.network.models.dao;
+package ubublik.network.models.security.dao;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import ubublik.network.db.HibernateUtil;
 import ubublik.network.exceptions.DuplicateUsernameException;
 import ubublik.network.exceptions.UserDataFormatException;
-import ubublik.network.models.Role;
-import ubublik.network.models.RoleName;
-import ubublik.network.models.User;
+import ubublik.network.models.security.Role;
+import ubublik.network.models.security.RoleName;
+import ubublik.network.models.security.User;
 import ubublik.network.services.UserDataValidator;
 
 import javax.persistence.NoResultException;
@@ -36,7 +36,7 @@ public class UserDao{
 
     @Autowired
     PasswordEncoder passwordEncoder;
-    
+
 
     public User getUserByNickname(String nickname)throws UsernameNotFoundException{
         try {
@@ -47,7 +47,7 @@ public class UserDao{
             criteriaQuery.where(criteriaBuilder.equal(root.get("nickname"), nickname));
             User user = session.createQuery(criteriaQuery).getSingleResult();
             return user;
-        }catch (NoResultException nre){
+        } catch (NoResultException nre){
             throw new UsernameNotFoundException("Username not found");
         } catch (Exception e){
             return null;

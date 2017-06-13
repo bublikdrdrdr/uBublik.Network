@@ -9,8 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ubublik.network.models.User;
-import ubublik.network.models.dao.UserDao;
+import ubublik.network.models.security.User;
+import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.security.jwt.TokenUtil;
 import ubublik.network.services.TokenUserService;
 

@@ -33,18 +33,23 @@ public class AuthenticationController {
     TokenUtil tokenUtil;
 
     @RequestMapping(value = "/auth", method = RequestMethod.POST)
-    public ResponseEntity<String> createAuthenticationToken(@RequestBody AuthenticationRequest request) throws AuthenticationException {
+    public ResponseEntity<String> createAuthenticationToken(@RequestBody AuthenticationRequest request) {
 
-        final Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        //final TokenUser tokenUser = tokenUserService.loadUserByUsername(request.getUsername());
-        final String token = tokenUtil.create(request.getUsername());
-        return ResponseEntity.ok(token);
+        try {
+            final Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            final String token = tokenUtil.create(request.getUsername());
+            return ResponseEntity.ok(token);
+        } catch (AuthenticationException ae){
+            return ResponseEntity.badRequest().body(ae.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/auth/refresh", method = RequestMethod.GET)
