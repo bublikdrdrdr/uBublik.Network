@@ -58,7 +58,11 @@ public class UserDao{
             throws
             DuplicateUsernameException,
             UserDataFormatException{
-        User existingUser = getUserByNickname(userData.getNickname());
+        User existingUser = null;
+        try {
+            existingUser = getUserByNickname(userData.getNickname());
+        } catch (UsernameNotFoundException unfe){
+        }
         if (existingUser!=null) throw new DuplicateUsernameException("Username already taken");
 
         if (!userDataValidator.validate(UserDataValidator.DataType.NICKNAME, userData.getNickname()))

@@ -33,6 +33,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(due.getMessage());
         } catch (UserDataFormatException udfe){
             return ResponseEntity.badRequest().body(udfe.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(null);
         }
     }
 

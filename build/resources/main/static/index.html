@@ -28,7 +28,6 @@
 <div class="container">
     <h1>JWT Spring Security Demo</h1>
 
-    <div class="alert alert-danger" id="notLoggedIn">Not logged in!</div>
 
     <div class="alert alert-info text-hidden" id="loggedIn"></div>
 
@@ -48,15 +47,38 @@
                             <input type="password" class="form-control" id="exampleInputPassword1"
                                    placeholder="password" required name="password">
                         </div>
-                        <div class="well">
-                            Try one of the following logins
-                            <ul>
-                                <li>admin & admin</li>
-                                <li>user & password</li>
-                                <li>disabled & password</li>
-                            </ul>
-                        </div>
                         <button type="submit" class="btn btn-default">login</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="registration">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Registration</h3>
+                </div>
+                <div class="panel-body">
+                    <form id="registrationForm">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="nicknameRegistration" placeholder="username"
+                                   required name="username">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="nameRegistration" placeholder="name"
+                                   required name="name">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="surnameRegistration" placeholder="surname"
+                                   required name="surname">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="passwordRegistration"
+                                   placeholder="password" required name="password">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="rePasswordRegistration"
+                                   placeholder="repeat password" required name="repassword">
+                        </div>
+                        <button type="submit" class="btn btn-default">registration</button>
                     </form>
                 </div>
             </div>
@@ -90,6 +112,36 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<!--<div class="modal fade" tabindex="-1" role="dialog" id="registrationSuccessModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Registration successful</h4>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>&lt;!&ndash; /.modal-content &ndash;&gt;
+    </div>&lt;!&ndash; /.modal-dialog &ndash;&gt;
+</div>&lt;!&ndash; /.modal &ndash;&gt;
+
+<div class="modal fade" tabindex="-1" role="dialog" id="registrationErrorModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Registration error</h4>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>&lt;!&ndash; /.modal-content &ndash;&gt;
+    </div>&lt;!&ndash; /.modal-dialog &ndash;&gt;
+</div>&lt;!&ndash; /.modal &ndash;&gt;-->
 
 <script src="https://code.jquery.com/jquery-2.2.2.js" integrity="sha256-4/zUCqiq0kqxhZIyp4G0Gk+AOtCJsY1TA00k5ClsZYE="
         crossorigin="anonymous"></script>
