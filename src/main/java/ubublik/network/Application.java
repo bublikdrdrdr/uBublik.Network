@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class Application {
 
+    // TODO: 14-Jun-17 add session.close() to all dao classes
     public static void main(String... args) {
         SpringApplication.run(Application.class, args);
     }

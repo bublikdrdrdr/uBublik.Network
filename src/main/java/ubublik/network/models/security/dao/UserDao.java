@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import ubublik.network.db.HibernateUtil;
 import ubublik.network.exceptions.DuplicateUsernameException;
 import ubublik.network.exceptions.UserDataFormatException;
+import ubublik.network.models.Profile;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.RoleName;
 import ubublik.network.models.security.User;
@@ -54,6 +55,7 @@ public class UserDao{
         }
     }
 
+
     public long registerUser(User userData)
             throws
             DuplicateUsernameException,
@@ -77,7 +79,7 @@ public class UserDao{
         String passwordHash = passwordEncoder.encode(userData.getPassword());
         userData.setPassword(passwordHash);
 
-        Session session = HibernateUtil.getSessionFactory().openSession();
+        Session session = HibernateUtil.getSession();
         User user = new User(
                 userData.getNickname(),
                 userData.getName(),
@@ -85,10 +87,13 @@ public class UserDao{
                 userData.getPassword(),
                 getUserBasicRoles(),
                 true,
-                new Date());
+                new Date(),
+                null);
         try {
             Transaction transaction = session.beginTransaction();
-            long id = (long)session.save(user);
+            long id = (long)session.save(user);//save user, because we need this object to create profile
+            Profile profile = new Profile(user, null, null, null, null);
+            session.save(profile);//save profile
             transaction.commit();
             return id;
         } catch (Exception e) {
@@ -103,4 +108,5 @@ public class UserDao{
         linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_USER));
         return linkedList;
     }
+
 }

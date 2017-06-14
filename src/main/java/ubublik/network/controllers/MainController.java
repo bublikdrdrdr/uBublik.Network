@@ -3,10 +3,7 @@ package ubublik.network.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ubublik.network.models.security.User;
 import ubublik.network.services.TokenUserService;
-
-import java.util.Date;
 
 /**
  * Created by Bublik on 10-Jun-17.
@@ -22,8 +19,8 @@ public class MainController {
         return tokenUserService.findMe().getUsername();
     }
 
-    @RequestMapping(value = "/test")
+    /*@RequestMapping(value = "/test")
     public User test(){
-        return new User("asd", "asd", "asd", "asd", null, true, new Date());
-    }
+        return new User("asd", "asd", "asd", "asd", null, true, new Date(), null);
+    }*/
 }

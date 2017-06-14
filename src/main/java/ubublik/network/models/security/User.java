@@ -1,11 +1,19 @@
 package ubublik.network.models.security;
 
+import ubublik.network.models.Profile;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+/**
+ * So, you can ask: why profile information are separated from User table?
+ * Because admins and moderators (in future) will have they user accounts for authorization,
+ * but they will not need a social network profile
+ */
 
 @Entity
 @Table(name = "users")
@@ -50,10 +58,13 @@ public class User {
             inverseJoinColumns = {@JoinColumn(name = "role", referencedColumnName = "id")})
     private List<Role> roles = new ArrayList<>();
 
+    @OneToOne(mappedBy = "user")
+    Profile profile;
+
     public User() {
     }
 
-    public User(String nickname, String name, String surname, String password, List<Role> roles, boolean enabled, Date registered) {
+    public User(String nickname, String name, String surname, String password, List<Role> roles, boolean enabled, Date registered, Profile profile) {
         this.nickname = nickname;
         this.name = name;
         this.surname = surname;
@@ -61,6 +72,7 @@ public class User {
         this.roles = roles;
         this.enabled = enabled;
         this.registered = registered;
+        this.profile = profile;
     }
 
     public Long getId() {
@@ -129,5 +141,13 @@ public class User {
 
     public Boolean getEnabled() {
         return enabled;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
     }
 }
