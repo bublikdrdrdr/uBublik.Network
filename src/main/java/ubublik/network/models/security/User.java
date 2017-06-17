@@ -1,5 +1,8 @@
 package ubublik.network.models.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import ubublik.network.models.Image;
+import ubublik.network.models.Message;
 import ubublik.network.models.Profile;
 
 import javax.persistence.*;
@@ -59,7 +62,20 @@ public class User {
     private List<Role> roles = new ArrayList<>();
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     Profile profile;
+
+    @OneToMany(mappedBy = "sender")// TODO: 17-Jun-17 delete this
+    @JsonIgnore
+    List<Message> sentMessages;
+
+    @OneToMany(mappedBy = "receiver")
+    @JsonIgnore
+    List<Message> receivedMessages;
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Image> images = new ArrayList<>();//todo: test
 
     public User() {
     }

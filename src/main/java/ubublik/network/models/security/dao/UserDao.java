@@ -103,6 +103,11 @@ public class UserDao{
         }
     }
 
+    public long registerAdmin(User user){
+        return 0;
+        // TODO: 17-Jun-17
+    }
+
     private List<Role> getUserBasicRoles(){
         LinkedList<Role> linkedList = new LinkedList<>();
         linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_USER));

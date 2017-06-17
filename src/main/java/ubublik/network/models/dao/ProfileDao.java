@@ -72,4 +72,17 @@ public class ProfileDao{
             return userDao.getUserByNickname(user.getNickname()).getProfile();
         }
     }
+
+    public void removeProfile(Profile profile){
+        Session session = HibernateUtil.getSession();
+        try{
+            Transaction transaction = session.beginTransaction();
+            session.remove(profile);
+            transaction.commit();
+        } catch (Exception e){
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
 }

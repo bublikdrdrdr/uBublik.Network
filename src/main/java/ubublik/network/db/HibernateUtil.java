@@ -7,6 +7,9 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
+import ubublik.network.models.FriendRelation;
+import ubublik.network.models.Image;
+import ubublik.network.models.Message;
 import ubublik.network.models.Profile;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.User;
@@ -36,6 +39,9 @@ public class HibernateUtil {
                 metadataSources.addAnnotatedClass(User.class);
                 metadataSources.addAnnotatedClass(Role.class);
                 metadataSources.addAnnotatedClass(Profile.class);
+                metadataSources.addAnnotatedClass(Message.class);
+                metadataSources.addAnnotatedClass(FriendRelation.class);
+                metadataSources.addAnnotatedClass(Image.class);
 
                 SessionFactory sessionFactory = metadataSources
                         .getMetadataBuilder().build()

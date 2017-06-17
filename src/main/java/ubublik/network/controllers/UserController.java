@@ -21,7 +21,6 @@ public class UserController {
     @Autowired
     UserDao userDao;
 
-
     //returns id or conflict/bad_request http status with error message
 
     @RequestMapping(value = "/registration", method = RequestMethod.POST)
