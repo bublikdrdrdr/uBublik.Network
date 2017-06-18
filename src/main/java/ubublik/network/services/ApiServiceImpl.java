@@ -1,7 +1,14 @@
 package ubublik.network.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ubublik.network.exceptions.UnauthorizedException;
+import ubublik.network.models.Gender;
+import ubublik.network.models.Profile;
+import ubublik.network.models.dao.ProfileDao;
+import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.rest.entities.*;
+import ubublik.network.security.jwt.TokenUser;
 
 import java.util.Date;
 
@@ -10,34 +17,117 @@ import java.util.Date;
  */
 @Service
 public class ApiServiceImpl implements ApiService{
+
+    @Autowired
+    UserDao userDao;
+
+    @Autowired
+    ProfileDao profileDao;
+
+    @Autowired
+    TokenUserService tokenUserService;
+
+
     @Override
     public User registerUser(UserRegistration userRegistration) {
-        return null;
+        ubublik.network.models.security.User user
+                = new ubublik.network.models.security.User(
+                userRegistration.getNickname(),
+                userRegistration.getName(),
+                userRegistration.getSurname(),
+                userRegistration.getPassword(),
+                null,
+                true,
+                null,
+                null);
+        long userId = userDao.registerUser(user);
+        user = userDao.getUserById(userId);
+        profileDao.createProfileForUser(user);
+
+        User responseUser = new User(userId, user.getNickname(), user.getName(), user.getSurname());
+        return responseUser;
     }
 
     @Override
     public User getMe() {
-        return null;
+        try {
+            TokenUser tokenUser = tokenUserService.findMe();
+            User user = new User(
+                    tokenUser.getId(),
+                    tokenUser.getUsername(),
+                    tokenUser.getFirstname(),
+                    tokenUser.getLastname()
+            );
+            return user;
+        } catch (UnauthorizedException ue){
+            return null;
+        } catch (Exception e){
+            throw e;
+        }
     }
 
     @Override
     public User getUser(long id) {
-        return null;
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
+        return responseUser;
     }
 
     @Override
     public User getUser(String nickname) {
-        return null;
+        ubublik.network.models.security.User user = userDao.getUserByNickname(nickname);
+        User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
+        return responseUser;
     }
 
     @Override
     public UserDetails getUserDetails(long id) {
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        Profile profile = user.getProfile();
+
+        String gender;
+        switch (profile.getGender()){
+            case NULL: gender = null; break;
+            case FEMALE: gender = "female"; break;
+            case MALE: gender = "male"; break;
+            default: gender = null;
+        }
+
+        UserDetails userDetails = new UserDetails(
+                user.getId(),
+                user.getName(),
+                user.getSurname(),
+                profile.getDob(),
+                profile.getCity(),
+                profile.getCountry(),
+                gender,
+                profile.getPhone());
         return null;
     }
 
     @Override
     public Status editUserDetails(UserDetails userDetails) {
-        return null;
+        ubublik.network.models.security.User user = userDao.getUserById(getMe().getId());
+        if (user.getProfile()==null) {
+            profileDao.createProfileForUser(user);
+            user = userDao.getUserById(user.getId());
+        }
+        Gender gender;
+        if (userDetails.getGender()==null) gender = Gender.NULL; else
+        if (userDetails.getGender().equals("male")) gender = Gender.MALE; else
+        if (userDetails.getGender().equals("female")) gender = Gender.FEMALE; else
+        gender = Gender.NULL;
+        Profile profile = new Profile(
+                user.getProfile().getId(),
+                user,
+                userDetails.getDob(),
+                userDetails.getCity(),
+                userDetails.getCountry(),
+                gender,
+                userDetails.getPhone()
+        );
+        profileDao.editProfile(profile);
+        return StatusFactory.getStatus(StatusFactory.StatusCode.OK);
     }
 
     @Override

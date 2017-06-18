@@ -12,13 +12,9 @@ import org.springframework.stereotype.Service;
 import ubublik.network.models.security.User;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.security.jwt.TokenUtil;
-import ubublik.network.services.TokenUserService;
 
 @Service
 public class AuthenticationManagerImpl implements AuthenticationManager {
-
-    @Autowired
-    TokenUserService tokenUserService;
 
     @Autowired
     UserDao userDao;

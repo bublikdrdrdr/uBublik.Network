@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import ubublik.network.db.HibernateUtil;
 import ubublik.network.exceptions.DuplicateUsernameException;
 import ubublik.network.exceptions.UserDataFormatException;
+import ubublik.network.models.Gender;
 import ubublik.network.models.Profile;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.RoleName;
@@ -38,10 +39,22 @@ public class UserDao{
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    public User getUserById(long id) throws IllegalArgumentException
+    {
+        Session session = HibernateUtil.getSession();
+        try {
+            return session.get(User.class, id);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
 
     public User getUserByNickname(String nickname)throws UsernameNotFoundException{
+        Session session = HibernateUtil.getSession();
         try {
-            Session session = HibernateUtil.getSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
             Root<User> root = criteriaQuery.from(User.class);
@@ -51,7 +64,9 @@ public class UserDao{
         } catch (NoResultException nre){
             throw new UsernameNotFoundException("Username not found");
         } catch (Exception e){
-            return null;
+            throw e;
+        } finally {
+            session.close();
         }
     }
 
@@ -92,7 +107,7 @@ public class UserDao{
         try {
             Transaction transaction = session.beginTransaction();
             long id = (long)session.save(user);//save user, because we need this object to create profile
-            Profile profile = new Profile(user, null, null, null, null);
+            Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
             session.save(profile);//save profile
             transaction.commit();
             return id;

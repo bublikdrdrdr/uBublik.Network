@@ -25,6 +25,7 @@ public class TokenUserServiceImpl implements TokenUserService {
     @Override
     public TokenUser findMe() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication==null) throw new UnauthorizedException("Not authorized");
         if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new UnauthorizedException("Authentication object is not instance of UsernamePasswordAuthenticationToken");
         UsernamePasswordAuthenticationToken upat = (UsernamePasswordAuthenticationToken)authentication;
         TokenUser tokenUser = (TokenUser)upat.getPrincipal();

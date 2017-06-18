@@ -7,12 +7,12 @@ public class StatusFactory {
 
     public enum StatusCode {OK};
 
-    Status getStatus(StatusCode sc){
+    public static Status getStatus(StatusCode sc){
         if (sc==null) return null;
         switch (sc){
-            case OK: return new Status(0L,"ok");
+            case OK: return new Status(sc.ordinal(),"ok");
 
-            default: return new Status(1L, "server error");
+            default: return new Status(-1, "server error");
         }
     }
 }

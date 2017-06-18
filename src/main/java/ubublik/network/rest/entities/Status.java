@@ -5,19 +5,19 @@ package ubublik.network.rest.entities;
  */
 public class Status {
 
-    private Long id;
+    private Integer id;
     private String text;
 
-    public Status(Long id, String text) {
+    public Status(Integer id, String text) {
         this.id = id;
         this.text = text;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

@@ -5,9 +5,9 @@ import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import ubublik.network.db.HibernateUtil;
+import ubublik.network.models.Gender;
 import ubublik.network.models.Profile;
 import ubublik.network.models.security.User;
-import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.services.UserDataValidator;
 
 import javax.transaction.Transactional;
@@ -19,10 +19,6 @@ public class ProfileDao{
 
     @Autowired
     UserDataValidator userDataValidator;
-
-    @Autowired
-    UserDao userDao;
-
 
 
     public Profile getProfileById(long id)throws IllegalArgumentException {
@@ -56,20 +52,19 @@ public class ProfileDao{
         }
     }
 
-    public Profile createProfileForUser(User user){//for users without profile (admins)
+    public long createProfileForUser(User user){//for users without profile (admins)
         if (user.getProfile()!=null) throw new IllegalArgumentException("User already has a profile");
         Session session = HibernateUtil.getSession();
         try{
             Transaction transaction = session.beginTransaction();
-            Profile profile = new Profile(user, null, null, null, null);
-            session.save(profile);
+            Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
+            long id = (long)session.save(profile);
             transaction.commit();
+            return id;
         } catch (Exception e){
             throw e;
         } finally {
             session.close();
-            //reload user entity from DB and get profile
-            return userDao.getUserByNickname(user.getNickname()).getProfile();
         }
     }
 

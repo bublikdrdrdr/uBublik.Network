@@ -36,24 +36,29 @@ public class Profile {
     @Column(name = "gender")
     private Gender gender;
 
+    @Column(name = "phone")
+    private String phone;
+
     public Profile() {
     }
 
-    public Profile(User user, Date dob, String city, String country, Gender gender) {
+    public Profile(User user, Date dob, String city, String country, Gender gender, String phone) {
         this.user = user;
         this.dob = dob;
         this.city = city;
         this.country = country;
         this.gender = gender;
+        this.phone = phone;
     }
 
-    public Profile(Long id, User user, Date dob, String city, String country, Gender gender) {
+    public Profile(Long id, User user, Date dob, String city, String country, Gender gender, String phone) {
         this.id = id;
         this.user = user;
         this.dob = dob;
         this.city = city;
         this.country = country;
         this.gender = gender;
+        this.phone = phone;
     }
 
     public Long getId() {
@@ -102,5 +107,13 @@ public class Profile {
 
     public void setGender(Gender gender) {
         this.gender = gender;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }
