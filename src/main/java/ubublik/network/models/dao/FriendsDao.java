@@ -63,5 +63,16 @@ public class FriendsDao {
         }
     }
 
+    public List<User> getUserFriends(User user){
+        Session session = HibernateUtil.getSession();
+        try {
+            // TODO: 19-Jun-17  
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
 
 }

@@ -1,6 +1,8 @@
 package ubublik.network.services;
 
 
+import ubublik.network.exceptions.DisabledUserException;
+import ubublik.network.exceptions.EntityNotFoundException;
 import ubublik.network.rest.entities.*;
 
 import java.util.Date;
@@ -12,10 +14,10 @@ public interface ApiService {
 
     User registerUser(UserRegistration userRegistration);
     User getMe();
-    User getUser(long id);
-    User getUser(String nickname);
-    UserDetails getUserDetails(long id);
-    Status editUserDetails(UserDetails userDetails);
+    User getUser(long id) throws DisabledUserException;
+    User getUser(String nickname) throws DisabledUserException;
+    UserDetails getUserDetails(long id) throws EntityNotFoundException, DisabledUserException;
+    Status editUserDetails(UserDetails userDetails) throws DisabledUserException;
     UserList getMyFriends(PagingRequest pagingRequest);
     UserList getUserFriends(PagingRequest pagingRequest);
     UserList search(Search search);

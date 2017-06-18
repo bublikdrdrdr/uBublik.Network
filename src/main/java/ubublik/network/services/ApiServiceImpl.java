@@ -1,8 +1,10 @@
 package ubublik.network.services;
 
+import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ubublik.network.exceptions.UnauthorizedException;
+import ubublik.network.exceptions.*;
 import ubublik.network.models.Gender;
 import ubublik.network.models.Profile;
 import ubublik.network.models.dao.ProfileDao;
@@ -29,7 +31,11 @@ public class ApiServiceImpl implements ApiService{
 
 
     @Override
-    public User registerUser(UserRegistration userRegistration) {
+    public User registerUser(UserRegistration userRegistration)
+            throws
+            DuplicateUsernameException,
+            UserDataFormatException,
+            HibernateException{
         ubublik.network.models.security.User user
                 = new ubublik.network.models.security.User(
                 userRegistration.getNickname(),
@@ -43,48 +49,48 @@ public class ApiServiceImpl implements ApiService{
         long userId = userDao.registerUser(user);
         user = userDao.getUserById(userId);
         profileDao.createProfileForUser(user);
-
-        User responseUser = new User(userId, user.getNickname(), user.getName(), user.getSurname());
-        return responseUser;
+        return new User(userId, user.getNickname(), user.getName(), user.getSurname());
     }
 
     @Override
-    public User getMe() {
-        try {
-            TokenUser tokenUser = tokenUserService.findMe();
-            User user = new User(
-                    tokenUser.getId(),
-                    tokenUser.getUsername(),
-                    tokenUser.getFirstname(),
-                    tokenUser.getLastname()
-            );
-            return user;
-        } catch (UnauthorizedException ue){
-            return null;
-        } catch (Exception e){
-            throw e;
-        }
+    public User getMe() throws InvalidPrincipalException, UnauthorizedException {
+        TokenUser tokenUser = tokenUserService.findMe();
+        return new User(
+                tokenUser.getId(),
+                tokenUser.getUsername(),
+                tokenUser.getFirstname(),
+                tokenUser.getLastname()
+        );
     }
 
     @Override
-    public User getUser(long id) {
+    public User getUser(long id) throws HibernateException, UserNotFoundException, DisabledUserException {
         ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new UserNotFoundException("User does not exist");
+        if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
         User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
         return responseUser;
     }
 
     @Override
-    public User getUser(String nickname) {
+    public User getUser(String nickname) throws UsernameNotFoundException, HibernateException, DisabledUserException {
         ubublik.network.models.security.User user = userDao.getUserByNickname(nickname);
+        if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
         User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
         return responseUser;
     }
 
     @Override
-    public UserDetails getUserDetails(long id) {
+    public UserDetails getUserDetails(long id)
+            throws EntityNotFoundException,
+            HibernateException,
+            DisabledUserException,
+            UserNotFoundException{
         ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new UserNotFoundException("User does not exist");
+        if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
         Profile profile = user.getProfile();
-
+        if (profile==null) throw new EntityNotFoundException("User does not have a profile");
         String gender;
         switch (profile.getGender()){
             case NULL: gender = null; break;
@@ -93,7 +99,7 @@ public class ApiServiceImpl implements ApiService{
             default: gender = null;
         }
 
-        UserDetails userDetails = new UserDetails(
+        return new UserDetails(
                 user.getId(),
                 user.getName(),
                 user.getSurname(),
@@ -102,12 +108,17 @@ public class ApiServiceImpl implements ApiService{
                 profile.getCountry(),
                 gender,
                 profile.getPhone());
-        return null;
     }
 
     @Override
-    public Status editUserDetails(UserDetails userDetails) {
+    public Status editUserDetails(UserDetails userDetails)
+            throws HibernateException,
+            UserNotFoundException,
+            DisabledUserException,
+            UnauthorizedException{
         ubublik.network.models.security.User user = userDao.getUserById(getMe().getId());
+        if (user==null) throw new UserNotFoundException("User does not exist");
+        if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
         if (user.getProfile()==null) {
             profileDao.createProfileForUser(user);
             user = userDao.getUserById(user.getId());
@@ -131,7 +142,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getMyFriends(PagingRequest pagingRequest) {
+    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException{
         return null;
     }
 

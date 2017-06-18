@@ -1,5 +1,6 @@
 package ubublik.network.models.security.dao;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class UserDao{
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    public User getUserById(long id) throws IllegalArgumentException
+    public User getUserById(long id) throws HibernateException
     {
         Session session = HibernateUtil.getSession();
         try {
@@ -52,7 +53,7 @@ public class UserDao{
     }
 
 
-    public User getUserByNickname(String nickname)throws UsernameNotFoundException{
+    public User getUserByNickname(String nickname)throws UsernameNotFoundException, HibernateException{
         Session session = HibernateUtil.getSession();
         try {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -74,7 +75,8 @@ public class UserDao{
     public long registerUser(User userData)
             throws
             DuplicateUsernameException,
-            UserDataFormatException{
+            UserDataFormatException,
+            HibernateException{
         User existingUser = null;
         try {
             existingUser = getUserByNickname(userData.getNickname());
