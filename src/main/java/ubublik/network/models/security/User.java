@@ -43,14 +43,17 @@ public class User {
     private String surname;
 
     @Column(name = "enabled")
+    @JsonIgnore
     @NotNull
     private Boolean enabled = true;
 
     @Column(name = "registered")
+    @JsonIgnore
     @NotNull
     private Date registered;
 
     @Column(name = "password")
+    @JsonIgnore
     @NotNull
     private String password;
 

@@ -7,10 +7,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
-import ubublik.network.models.FriendRelation;
-import ubublik.network.models.Image;
-import ubublik.network.models.Message;
-import ubublik.network.models.Profile;
+import ubublik.network.models.*;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.User;
 
@@ -32,6 +29,8 @@ public class HibernateUtil {
                 settings.put(Environment.USER, "root");
                 settings.put(Environment.PASS, "root");
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQLDialect");
+                settings.put(Environment.SHOW_SQL, "true");
+                settings.put(Environment.FORMAT_SQL, "true");
                 registryBuilder.applySettings(settings);
                 MetadataSources metadataSources = new MetadataSources(
                         registryBuilder.build());
@@ -42,6 +41,8 @@ public class HibernateUtil {
                 metadataSources.addAnnotatedClass(Message.class);
                 metadataSources.addAnnotatedClass(FriendRelation.class);
                 metadataSources.addAnnotatedClass(Image.class);
+                metadataSources.addAnnotatedClass(ProfilePicture.class);
+
 
                 SessionFactory sessionFactory = metadataSources
                         .getMetadataBuilder().build()

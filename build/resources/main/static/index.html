@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JWT Spring Security Demo</title>
+    <title>uBublik.Network test page</title>
 
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
@@ -26,7 +26,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>JWT Spring Security Demo</h1>
+    <h1>uBublik.Network test page</h1>
 
 
     <div class="alert alert-info text-hidden" id="loggedIn"></div>
@@ -95,6 +95,31 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-default" id="methods">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Methods</h3>
+                </div>
+                <div class="panel-body">
+                    <button type="button" class="btn btn-default" id="getUsersButton">Get users list</button>
+                    <button type="button" class="btn btn-default" id="getProfileButton">Get profile</button>
+                    <button type="button" class="btn btn-default" id="getProfileImagesButton">Get profile images</button>
+                    <button type="button" class="btn btn-default" id="getDialogsButton">Get dialogs</button><br><br>
+                    <button type="button" class="btn btn-default" id="getMessagesButton">Get messages</button>
+                    <input type="text" id="dialogNickname"><br><br>
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="received">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Response</h3>
+                </div>
+                <div class="panel-body">
+                    <div id="responseBody"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -113,7 +138,7 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-<!--<div class="modal fade" tabindex="-1" role="dialog" id="registrationSuccessModal">
+<div class="modal fade" tabindex="-1" role="dialog" id="registrationSuccessModal">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -124,9 +149,9 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
-        </div>&lt;!&ndash; /.modal-content &ndash;&gt;
-    </div>&lt;!&ndash; /.modal-dialog &ndash;&gt;
-</div>&lt;!&ndash; /.modal &ndash;&gt;
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" tabindex="-1" role="dialog" id="registrationErrorModal">
     <div class="modal-dialog">
@@ -139,9 +164,9 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
-        </div>&lt;!&ndash; /.modal-content &ndash;&gt;
-    </div>&lt;!&ndash; /.modal-dialog &ndash;&gt;
-</div>&lt;!&ndash; /.modal &ndash;&gt;-->
+        </div>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-2.2.2.js" integrity="sha256-4/zUCqiq0kqxhZIyp4G0Gk+AOtCJsY1TA00k5ClsZYE="
         crossorigin="anonymous"></script>
