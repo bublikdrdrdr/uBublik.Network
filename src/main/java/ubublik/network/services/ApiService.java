@@ -1,5 +1,6 @@
 package ubublik.network.services;
 
+
 import ubublik.network.rest.entities.*;
 
 import java.util.Date;
@@ -9,10 +10,12 @@ import java.util.Date;
  */
 public interface ApiService {
 
+    User registerUser(UserRegistration userRegistration);
     User getMe();
     User getUser(long id);
     User getUser(String nickname);
     UserDetails getUserDetails(long id);
+    Status editUserDetails(UserDetails userDetails);
     UserList getMyFriends(PagingRequest pagingRequest);
     UserList getUserFriends(PagingRequest pagingRequest);
     UserList search(Search search);
@@ -34,4 +37,13 @@ public interface ApiService {
     Post getPost(long id);
     Post addPost(Post post);
     Status removePost(long id);
+
+    Status report(Report report);//just sending message to admin
+
+    //admins only
+    Status addProfile(UserDetails userDetails);
+    Status blockUser(long id);
+    Status unblockUser(long id);
+    User registerAdmin(UserRegistration userRegistration);
+    Status removeProfile(long id);
 }

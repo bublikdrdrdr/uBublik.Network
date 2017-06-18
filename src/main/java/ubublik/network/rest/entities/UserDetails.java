@@ -9,14 +9,18 @@ public class UserDetails {
 
     private Long id;//not profile, user id
 
+    private String name;
+    private String surname;
     private Date dob;
     private String city;
     private String country;
     private String gender;//male/female
     private String phone;
 
-    public UserDetails(Long id, Date dob, String city, String country, String gender, String phone) {
+    public UserDetails(Long id, String name, String surname, Date dob, String city, String country, String gender, String phone) {
         this.id = id;
+        this.name = name;
+        this.surname = surname;
         this.dob = dob;
         this.city = city;
         this.country = country;
@@ -30,6 +34,22 @@ public class UserDetails {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
 
     public Date getDob() {

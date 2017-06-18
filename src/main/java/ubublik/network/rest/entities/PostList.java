@@ -8,10 +8,12 @@ import java.util.List;
 public class PostList {
 
     private Long user_id;
+    private Long count;
     private List<Long> items;
 
-    public PostList(Long user_id, List<Long> items) {
+    public PostList(Long user_id, Long count, List<Long> items) {
         this.user_id = user_id;
+        this.count = count;
         this.items = items;
     }
 
