@@ -7,12 +7,15 @@ import org.springframework.stereotype.Service;
 import ubublik.network.exceptions.*;
 import ubublik.network.models.Gender;
 import ubublik.network.models.Profile;
+import ubublik.network.models.dao.FriendsDao;
 import ubublik.network.models.dao.ProfileDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.rest.entities.*;
 import ubublik.network.security.jwt.TokenUser;
 
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Bublik on 18-Jun-17.
@@ -27,7 +30,14 @@ public class ApiServiceImpl implements ApiService{
     ProfileDao profileDao;
 
     @Autowired
+    FriendsDao friendsDao;
+
+    @Autowired
     TokenUserService tokenUserService;
+
+    private ubublik.network.models.security.User getMySecurityUser() throws HibernateException, UnauthorizedException{
+        return userDao.getUserById(tokenUserService.findMe().getId());
+    }
 
 
     @Override
@@ -142,8 +152,29 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException{
-        return null;
+    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException{
+        ubublik.network.models.security.User user = /*getMySecurityUser();*/ userDao.getUserById(pagingRequest.getId());
+        if (user==null) throw new EntityNotFoundException("Can't find logged user");
+        List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user);
+        UserList userList = new UserList((long)friends.size(), new LinkedList<>());
+        long i = 0;
+        long to = pagingRequest.getOffset()+pagingRequest.getSize();
+        for (ubublik.network.models.security.User friend:friends) {
+            if (i>=pagingRequest.getOffset() && i<to)
+            {
+                userList.addUser(
+                        new User(
+                                friend.getId(),
+                                friend.getNickname(),
+                                friend.getName(),
+                                friend.getSurname()
+                        )
+                );
+            }
+            if (i>=to) break;
+            i++;
+        }
+        return userList;
     }
 
     @Override

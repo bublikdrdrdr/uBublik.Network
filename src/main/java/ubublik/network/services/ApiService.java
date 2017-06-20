@@ -18,7 +18,7 @@ public interface ApiService {
     User getUser(String nickname) throws DisabledUserException;
     UserDetails getUserDetails(long id) throws EntityNotFoundException, DisabledUserException;
     Status editUserDetails(UserDetails userDetails) throws DisabledUserException;
-    UserList getMyFriends(PagingRequest pagingRequest);
+    UserList getMyFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
     UserList getUserFriends(PagingRequest pagingRequest);
     UserList search(Search search);
     Image getImage(long id);
@@ -26,7 +26,7 @@ public interface ApiService {
     UserList getFriendsRequests(PagingRequest pagingRequest);
     UserList getOutgoingFriendsRequests(PagingRequest pagingRequest);
     Status addFriend(long id);
-    Status removeFriend(long id);
+    Status removeFriend(long id);//same as cancel request
     DialogList getDialogs(PagingRequest pagingRequest);
     Status removeDialog(long userId);
     Boolean checkNewMessages(Date lastUpdate);

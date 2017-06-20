@@ -3,13 +3,10 @@ package ubublik.network.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ubublik.network.models.ProfilePicture;
-import ubublik.network.models.dao.ImageDao;
-import ubublik.network.models.security.User;
-import ubublik.network.models.security.dao.UserDao;
+import ubublik.network.rest.entities.PagingRequest;
+import ubublik.network.rest.entities.UserList;
+import ubublik.network.services.ApiService;
 import ubublik.network.services.TokenUserService;
-
-import java.util.List;
 
 /**
  * Created by Bublik on 10-Jun-17.
@@ -21,10 +18,7 @@ public class MainController {
     TokenUserService tokenUserService;
 
     @Autowired
-    ImageDao imageDao;
-
-    @Autowired
-    UserDao userDao;
+    ApiService apiService;
 
     @RequestMapping("/me")
     public String me(){
@@ -32,11 +26,10 @@ public class MainController {
     }
 
     @RequestMapping(value = "/test")
-    public void test(){
+    public void test() throws Exception{
         long t = System.currentTimeMillis();
-        User user = userDao.getUserByNickname("bublik");
-        List<ProfilePicture> profilePictures = imageDao.getProfilePictures(user);
-        profilePictures.size();
+        UserList fr = apiService.getMyFriends(new PagingRequest(4L, 0L, 1l));
+        fr.getItems();
         System.out.println(System.currentTimeMillis()-t);
         //Image image = new  Image(new byte[]{0,1,2,3}, false, null, userDao.getUserByNickname("bublik") , new Date());
        // imageDao.addImage(image);
