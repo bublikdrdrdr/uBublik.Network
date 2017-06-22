@@ -15,16 +15,18 @@ import ubublik.network.models.Profile;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.RoleName;
 import ubublik.network.models.security.User;
+import ubublik.network.rest.entities.Search;
+import ubublik.network.rest.entities.SearchOrder;
 import ubublik.network.services.UserDataValidator;
 
+import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 
 @Repository
@@ -129,6 +131,127 @@ public class UserDao{
         LinkedList<Role> linkedList = new LinkedList<>();
         linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_USER));
         return linkedList;
+    }
+
+    public int searchCount(Search search){
+        Session session = HibernateUtil.getSession();
+        try {
+            EntityManager em = session.getEntityManagerFactory().createEntityManager();
+            String sql = ("SELECT u FROM User u\n" +
+                    "     WHERE (1=1)");
+            if (search.getName()!=null){
+                sql+= "AND (lower(concat(u.name, ' ', u.surname, ' ', u.name))LIKE lower('%"+search.getName()+"%'))";
+            }
+            if (search.getCity()!=null){
+                sql+= "AND (lower(u.profile.city)LIKE lower('"+search.getCity()+"'))";
+            }
+            if (search.getCountry()!=null){
+                sql+= "AND (lower(u.profile.country)LIKE lower('"+search.getCountry()+"'))";
+            }
+            if (search.getAge_from()!=null){
+                sql+= "AND (u.profile.dob <= :agefrom)";
+            }
+            if (search.getAge_to()!=null){
+                sql+= "AND (u.profile.dob >= :ageto)";
+            }
+            if (search.getGenderObject()!=Gender.NULL){
+                sql+= "AND (u.profile.gender = :gender)";
+            }
+            javax.persistence.Query query = em.createQuery(sql);
+            if (search.getAge_from()!=null){
+                Calendar c = new GregorianCalendar();
+                c.add(Calendar.YEAR, search.getAge_from()*-1);
+                query.setParameter("agefrom",c.getTime(), TemporalType.DATE);
+            }
+            if (search.getAge_to()!=null){
+                Calendar c = new GregorianCalendar();
+                c.add(Calendar.YEAR, search.getAge_from()*-1);
+                query.setParameter("ageto",c.getTime(), TemporalType.DATE);
+            }
+            if (search.getGender()!=null)
+            {
+                query.setParameter("gender", search.getGenderObject());
+            }
+            query.setFirstResult(search.getOffset());
+            query.setMaxResults(search.getSize());
+            return ((Long)query.getSingleResult()).intValue();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public List<User> searchUsers(Search search){
+        Session session = HibernateUtil.getSession();
+        try {
+            EntityManager em = session.getEntityManagerFactory().createEntityManager();
+            String sql = ("SELECT u FROM User u\n" +
+                    "     WHERE (1=1)");
+            if (search.getName()!=null){
+                sql+= "AND (lower(concat(u.name, ' ', u.surname, ' ', u.name))LIKE lower('%"+search.getName()+"%'))";
+            }
+            if (search.getCity()!=null){
+                sql+= "AND (lower(u.profile.city)LIKE lower('"+search.getCity()+"'))";
+            }
+            if (search.getCountry()!=null){
+                sql+= "AND (lower(u.profile.country)LIKE lower('"+search.getCountry()+"'))";
+            }
+            if (search.getAge_from()!=null){
+                sql+= "AND (u.profile.dob <= :agefrom)";
+            }
+            if (search.getAge_to()!=null){
+                sql+= "AND (u.profile.dob >= :ageto)";
+            }
+            if (search.getGenderObject()!=Gender.NULL){
+                sql+= "AND (u.profile.gender = :gender)";
+            }
+            if (search.getOrderEnum()!= SearchOrder.NONE){
+                sql+="ORDER BY ";
+                switch (search.getOrderEnum()){
+                    case DATE:
+                        sql+="u.registered";
+                        break;
+                    case DATE_DESC:
+                        sql+="u.registered DESC";
+                        break;
+                    case NAME:
+                        sql+="u.name";
+                        break;
+                    case NAME_DESC:
+                        sql+="u.name DESC";
+                        break;
+                    case SURNAME:
+                        sql+="u.surname";
+                        break;
+                    case SURNAME_DESC:
+                        sql+="u.surname DESC";
+                        break;
+                }
+            }
+            javax.persistence.Query query = em.createQuery(sql);
+            if (search.getAge_from()!=null){
+                Calendar c = new GregorianCalendar();
+                c.add(Calendar.YEAR, search.getAge_from()*-1);
+                query.setParameter("agefrom",c.getTime(), TemporalType.DATE);
+            }
+            if (search.getAge_to()!=null){
+                Calendar c = new GregorianCalendar();
+                c.add(Calendar.YEAR, search.getAge_from()*-1);
+                query.setParameter("ageto",c.getTime(), TemporalType.DATE);
+            }
+            if (search.getGender()!=null)
+            {
+                query.setParameter("gender", search.getGenderObject());
+            }
+            query.setFirstResult(search.getOffset());
+            query.setMaxResults(search.getSize());
+            return (List<User>) query.getResultList();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
     }
 
 }

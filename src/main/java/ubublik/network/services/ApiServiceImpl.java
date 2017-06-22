@@ -14,8 +14,12 @@ import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
 import ubublik.network.security.jwt.TokenUser;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+
+import static ubublik.network.properties.SocialNetworkProperties.*;
 
 /**
  * Created by Bublik on 18-Jun-17.
@@ -45,6 +49,34 @@ public class ApiServiceImpl implements ApiService{
         if (pagingRequest.getSize()==null) pagingRequest.setSize(defaultSize);
         if (pagingRequest.getSize()<1) pagingRequest.setSize(defaultSize);
         return pagingRequest;
+    }
+
+    private Search fixSearchLimit(Search search, int defaultOffset, int defaultSize){
+        if (search.getOffset()==null) search.setOffset(defaultOffset);
+        if (search.getOffset()<0) search.setOffset(defaultOffset);
+        if (search.getSize()==null) search.setSize(defaultSize);
+        if (search.getSize()<1) search.setSize(defaultSize);
+        return search;
+    }
+
+    private List<User> toRestUsers(List<ubublik.network.models.security.User> securityUsers){
+        if (securityUsers==null) return null;
+        List<User> restUsers = new ArrayList<>(securityUsers.size());
+        Iterator<ubublik.network.models.security.User> iterator = securityUsers.iterator();
+        while (iterator.hasNext()){
+            ubublik.network.models.security.User current = iterator.next();
+            if (current!=null){
+                restUsers.add(
+                        new User(
+                                current.getId(),
+                                current.getNickname(),
+                                current.getName(),
+                                current.getSurname()
+                        )
+                );
+            }
+        }
+        return restUsers;
     }
 
 
@@ -86,16 +118,14 @@ public class ApiServiceImpl implements ApiService{
         ubublik.network.models.security.User user = userDao.getUserById(id);
         if (user==null) throw new UserNotFoundException("User does not exist");
         if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
-        User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
-        return responseUser;
+        return new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
     }
 
     @Override
     public User getUser(String nickname) throws UsernameNotFoundException, HibernateException, DisabledUserException {
         ubublik.network.models.security.User user = userDao.getUserByNickname(nickname);
         if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
-        User responseUser = new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
-        return responseUser;
+        return new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
     }
 
     @Override
@@ -166,38 +196,54 @@ public class ApiServiceImpl implements ApiService{
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
         List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
         UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
-        for (ubublik.network.models.security.User friend:friends) {
-            userList.addUser(
-                    new User(
-                            friend.getId(),
-                            friend.getNickname(),
-                            friend.getName(),
-                            friend.getSurname()));
-        }
+        userList.setItems(toRestUsers(friends));
         return userList;
     }
 
     @Override
     public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException{
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
+        // TODO: 22-Jun-17 add checking friends
         if (user==null) throw new EntityNotFoundException("Can't find logged user");
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
         List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
         UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
-        for (ubublik.network.models.security.User friend:friends) {
-                userList.addUser(
-                        new User(
-                                friend.getId(),
-                                friend.getNickname(),
-                                friend.getName(),
-                                friend.getSurname()));
-        }
+        userList.setItems(toRestUsers(friends));
         return userList;
     }
 
     @Override
-    public UserList search(Search search) {
-        return null;
+    public UserList search(Search search)
+            throws IllegalArgumentException, HibernateException, UnauthorizedException, EntityNotFoundException,
+            AccessDeniedException{
+
+        switch (search.getSourceEnum()){
+            case ALL:
+                fixSearchLimit(search, defaultSearchListOffset, defaultSearchListSize);
+                List<ubublik.network.models.security.User> res = userDao.searchUsers(search);
+                return new UserList(0,
+                        toRestUsers(res));
+            case FRIENDS:
+                fixSearchLimit(search, defaultFriendListOffset, defaultFriendListSize);
+                ubublik.network.models.security.User listOwner;
+                if (search.getSource_id()!=null) {
+                    listOwner = userDao.getUserById(search.getSource_id());
+                    ubublik.network.models.security.User me = getMySecurityUser();
+                    if (!me.getId().equals(search.getSource_id())){
+                        if (!SocialNetworkProperties.friendsArePublic){
+                            if (!friendsDao.haveFriendRelation(me, listOwner)){
+                                throw new AccessDeniedException("Access denied, the user is not your friend");
+                            }
+                        }
+                    }
+                } else{
+                    listOwner = getMySecurityUser();
+                }
+                List<ubublik.network.models.security.User> result = friendsDao.searchFriends(listOwner, search);
+                return new UserList(friendsDao.searchCount(listOwner, search),
+                        toRestUsers(result));
+            default: throw new IllegalArgumentException("Unsupported source type");
+        }
     }
 
     @Override

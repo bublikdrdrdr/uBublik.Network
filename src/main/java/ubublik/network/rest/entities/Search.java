@@ -1,5 +1,7 @@
 package ubublik.network.rest.entities;
 
+import ubublik.network.models.Gender;
+
 /**
  * Created by Bublik on 17-Jun-17.
  */
@@ -10,13 +12,14 @@ public class Search {
     String country;
     Integer age_from;
     Integer age_to;
-    String source;//user sources
+    String source;//UserSources
     Long source_id;//if from friends, its id
     String gender;//male/female/null
-    Long offset;
-    Long size;
+    Integer offset;
+    Integer size;
+    String order;//SearchOrder
 
-    public Search(String name, String city, String country, Integer age_from, Integer age_to, String source, Long source_id, String gender, Long offset, Long size) {
+    public Search(String name, String city, String country, Integer age_from, Integer age_to, String source, Long source_id, String gender, Integer offset, Integer size, String order) {
         this.name = name;
         this.city = city;
         this.country = country;
@@ -27,6 +30,7 @@ public class Search {
         this.gender = gender;
         this.offset = offset;
         this.size = size;
+        this.order = order;
     }
 
     public String getName() {
@@ -93,19 +97,58 @@ public class Search {
         this.gender = gender;
     }
 
-    public Long getOffset() {
+    public Integer getOffset() {
         return offset;
     }
 
-    public void setOffset(Long offset) {
+    public void setOffset(Integer offset) {
         this.offset = offset;
     }
 
-    public Long getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(Long size) {
+    public void setSize(Integer size) {
         this.size = size;
+    }
+
+    public String getOrder() {
+        return order;
+    }
+
+    public void setOrder(String order) {
+        this.order = order;
+    }
+
+    public UserSources getSourceEnum(){
+        if (this.getSource()==null) return UserSources.ALL;
+        else if (this.getSource().equalsIgnoreCase(UserSources.FRIENDS.toString())) return UserSources.FRIENDS; else
+            return UserSources.ALL;
+    }
+
+    public SearchOrder getOrderEnum(){
+        if (this.getOrder()==null) return SearchOrder.NONE;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.DATE.toString())) return SearchOrder.DATE;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.DATE_DESC.toString())) return SearchOrder.DATE_DESC;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.NAME.toString())) return SearchOrder.NAME;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.NAME_DESC.toString())) return SearchOrder.NAME_DESC;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.SURNAME.toString())) return SearchOrder.SURNAME;
+        else if (this.getOrder().equalsIgnoreCase(SearchOrder.SURNAME_DESC.toString())) return SearchOrder.SURNAME_DESC;
+        else return SearchOrder.NONE;
+    }
+
+    public char getGenderChar(){
+        if (this.gender==null) return 'N';
+        if (this.gender.equalsIgnoreCase("male")) return 'M';
+        if (this.gender.equalsIgnoreCase("female")) return 'F';
+        return 'N';
+    }
+
+    public Gender getGenderObject(){
+        if (this.getGender()==null) return Gender.NULL; else
+        if (this.getGender().equalsIgnoreCase(Gender.MALE.toString())) return Gender.MALE; else
+        if (this.getGender().equalsIgnoreCase(Gender.FEMALE.toString())) return Gender.FEMALE; else
+        return Gender.NULL;
     }
 }
