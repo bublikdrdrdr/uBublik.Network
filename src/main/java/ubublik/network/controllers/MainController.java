@@ -3,8 +3,8 @@ package ubublik.network.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ubublik.network.models.dao.FriendsDao;
-import ubublik.network.models.security.dao.UserDao;
+import ubublik.network.rest.entities.PagingRequest;
+import ubublik.network.services.ApiService;
 import ubublik.network.services.TokenUserService;
 
 /**
@@ -16,14 +16,9 @@ public class MainController {
     @Autowired
     TokenUserService tokenUserService;
 
-    //@Autowired
-    //ApiService apiService;
-
     @Autowired
-    UserDao userDao;
+    ApiService apiService;
 
-    @Autowired
-    FriendsDao friendsDao;
 
     @RequestMapping("/me")
     public String me(){
@@ -31,12 +26,12 @@ public class MainController {
     }
 
     @RequestMapping(value = "/test")
-    public void test() throws Exception{
+    public Object test() throws Exception{
         long t = System.currentTimeMillis();
        // UserList fr = apiService.getMyFriends(new PagingRequest(4L, 0L, 1l));
-        Object fr = friendsDao.getUserFriendsV2(userDao.getUserById(4));
-        fr.hashCode();
+        Object o = apiService.getUserFriends(new PagingRequest(4L,null, null));
         System.out.println(System.currentTimeMillis()-t);
+        return o;
         //Image image = new  Image(new byte[]{0,1,2,3}, false, null, userDao.getUserByNickname("bublik") , new Date());
        // imageDao.addImage(image);
     }

@@ -6,16 +6,16 @@ package ubublik.network.rest.entities;
 public class PagingRequest {
 
     private Long id;//for some situations
-    private Long offset;
-    private Long size;
+    private Integer offset;
+    private Integer size;
 
-    public PagingRequest(Long id, Long offset, Long size) {
+    public PagingRequest(Long id, Integer offset, Integer size) {
         this.id = id;
         this.offset = offset;
         this.size = size;
     }
 
-    public PagingRequest(Long offset, Long size) {
+    public PagingRequest(Integer offset, Integer size) {
         this.offset = offset;
         this.size = size;
     }
@@ -28,19 +28,19 @@ public class PagingRequest {
         this.id = id;
     }
 
-    public Long getOffset() {
+    public Integer getOffset() {
         return offset;
     }
 
-    public void setOffset(Long offset) {
+    public void setOffset(Integer offset) {
         this.offset = offset;
     }
 
-    public Long getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(Long size) {
+    public void setSize(Integer size) {
         this.size = size;
     }
 }

@@ -1,5 +1,6 @@
 package ubublik.network.rest.entities;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -7,23 +8,28 @@ import java.util.List;
  */
 public class UserList {
 
-    private Long count;//full count
+    private Integer count;//full count
     private List<User> items;
 
-    public UserList(Long count, List<User> items) {
+    public UserList(Integer count, List<User> items) {
         this.count = count;
         this.items = items;
+    }
+
+    public UserList(Integer count){
+        this.count = count;
+        this.items = new LinkedList<>();
     }
 
     public void addUser(User user){
         items.add(user);
     }
 
-    public Long getCount() {
+    public Integer getCount() {
         return count;
     }
 
-    public void setCount(Long count) {
+    public void setCount(Integer count) {
         this.count = count;
     }
 

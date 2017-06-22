@@ -19,7 +19,7 @@ public interface ApiService {
     UserDetails getUserDetails(long id) throws EntityNotFoundException, DisabledUserException;
     Status editUserDetails(UserDetails userDetails) throws DisabledUserException;
     UserList getMyFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
-    UserList getUserFriends(PagingRequest pagingRequest);
+    UserList getUserFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
     UserList search(Search search);
     Image getImage(long id);
     UserImagesList getUserImages(PagingRequest pagingRequest);

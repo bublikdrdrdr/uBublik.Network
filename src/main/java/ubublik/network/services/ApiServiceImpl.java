@@ -10,11 +10,11 @@ import ubublik.network.models.Profile;
 import ubublik.network.models.dao.FriendsDao;
 import ubublik.network.models.dao.ProfileDao;
 import ubublik.network.models.security.dao.UserDao;
+import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
 import ubublik.network.security.jwt.TokenUser;
 
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,6 +37,14 @@ public class ApiServiceImpl implements ApiService{
 
     private ubublik.network.models.security.User getMySecurityUser() throws HibernateException, UnauthorizedException{
         return userDao.getUserById(tokenUserService.findMe().getId());
+    }
+
+    private PagingRequest fixPagingRequest(PagingRequest pagingRequest, int defaultOffset, int defaultSize){
+        if (pagingRequest.getOffset()==null) pagingRequest.setOffset(defaultOffset);
+        if (pagingRequest.getOffset()<0) pagingRequest.setOffset(defaultOffset);
+        if (pagingRequest.getSize()==null) pagingRequest.setSize(defaultSize);
+        if (pagingRequest.getSize()<1) pagingRequest.setSize(defaultSize);
+        return pagingRequest;
     }
 
 
@@ -153,33 +161,38 @@ public class ApiServiceImpl implements ApiService{
 
     @Override
     public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException{
-        ubublik.network.models.security.User user = /*getMySecurityUser();*/ userDao.getUserById(pagingRequest.getId());
+        ubublik.network.models.security.User user = getMySecurityUser();
         if (user==null) throw new EntityNotFoundException("Can't find logged user");
-        List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user);
-        UserList userList = new UserList((long)friends.size(), new LinkedList<>());
-        long i = 0;
-        long to = pagingRequest.getOffset()+pagingRequest.getSize();
+        pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
+        List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
+        UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
         for (ubublik.network.models.security.User friend:friends) {
-            if (i>=pagingRequest.getOffset() && i<to)
-            {
-                userList.addUser(
-                        new User(
-                                friend.getId(),
-                                friend.getNickname(),
-                                friend.getName(),
-                                friend.getSurname()
-                        )
-                );
-            }
-            if (i>=to) break;
-            i++;
+            userList.addUser(
+                    new User(
+                            friend.getId(),
+                            friend.getNickname(),
+                            friend.getName(),
+                            friend.getSurname()));
         }
         return userList;
     }
 
     @Override
-    public UserList getUserFriends(PagingRequest pagingRequest) {
-        return null;
+    public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException{
+        ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
+        if (user==null) throw new EntityNotFoundException("Can't find logged user");
+        pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
+        List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
+        UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
+        for (ubublik.network.models.security.User friend:friends) {
+                userList.addUser(
+                        new User(
+                                friend.getId(),
+                                friend.getNickname(),
+                                friend.getName(),
+                                friend.getSurname()));
+        }
+        return userList;
     }
 
     @Override

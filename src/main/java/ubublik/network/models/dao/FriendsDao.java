@@ -13,8 +13,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -119,34 +117,15 @@ public class FriendsDao {
         }
     }
 
-    /**
-     SELECT ffr.request_receiver FROM friend_relations ffr
-     JOIN friend_relations sfr on sfr.request_receiver=ffr.request_sender and sfr.request_sender=ffr.request_receiver
-     WHERE ffr.request_sender=? AND ffr.request_receiver=sfr.request_sender
-     */
-    public List<User> getUserFriends(User user){
+    public int getUserFriendsCount(User user){
         Session session = HibernateUtil.getSession();
         try {
-            List<User> friends = new LinkedList<>();
-
-            List<FriendRelation> sent = getOutgoingFriendRequests(user);
-            List<FriendRelation> received = getIncomingFriendRequests(user);
-// FIXME: 20-Jun-17 omg... i wanna get users result by sql query, but i don't know how to realize it in criteriaquery
-            Iterator<FriendRelation> sentIterator = sent.iterator();
-            while (sentIterator.hasNext()) {
-                FriendRelation sCurrent = sentIterator.next();
-                Iterator<FriendRelation> receivedIterator = received.iterator();
-                while (receivedIterator.hasNext()) {
-                    FriendRelation rCurrent = receivedIterator.next();
-                    if (sCurrent.getReceiver().getId().equals(rCurrent.getSender().getId())) {
-                        friends.add(rCurrent.getSender());
-                        receivedIterator.remove();
-                        sentIterator.remove();
-                        break;
-                    }
-                }
-            }
-            return friends;
+            EntityManager em = session.getEntityManagerFactory().createEntityManager();
+            javax.persistence.Query query = em.createQuery("SELECT COUNT(ffr.receiver) FROM FriendRelation ffr\n" +
+                    "     JOIN FriendRelation sfr on sfr.receiver=ffr.sender and sfr.sender=ffr.receiver\n" +
+                    "     WHERE ffr.sender= :id AND ffr.receiver=sfr.sender");
+            query.setParameter("id", user);
+            return ((Long)query.getSingleResult()).intValue();
         } catch (Exception e) {
             throw e;
         } finally {
@@ -154,8 +133,8 @@ public class FriendsDao {
         }
     }
 
-    // // TODO: 21-Jun-17 add order and limit 
-    public List<User> getUserFriendsV2(User user){
+    // TODO: 22-Jun-17 add order by
+    public List<User> getUserFriends(User user, int offset, int count){
         Session session = HibernateUtil.getSession();
         try {
             EntityManager em = session.getEntityManagerFactory().createEntityManager();
@@ -163,7 +142,9 @@ public class FriendsDao {
                     "     JOIN FriendRelation sfr on sfr.receiver=ffr.sender and sfr.sender=ffr.receiver\n" +
                     "     WHERE ffr.sender= :id AND ffr.receiver=sfr.sender");
             query.setParameter("id", user);
-            return query.getResultList();
+            query.setFirstResult(offset);
+            query.setMaxResults(count);
+            return (List<User>) query.getResultList();
         } catch (Exception e) {
             throw e;
         } finally {
