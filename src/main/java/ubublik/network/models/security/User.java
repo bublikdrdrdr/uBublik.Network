@@ -66,15 +66,15 @@ public class User {
 
     @OneToOne(mappedBy = "user")
     @JsonIgnore
-    Profile profile;
+    private Profile profile;
 
     @OneToMany(mappedBy = "sender")// TODO: 17-Jun-17 delete this
     @JsonIgnore
-    List<Message> sentMessages;
+    private List<Message> sentMessages;
 
     @OneToMany(mappedBy = "receiver")
     @JsonIgnore
-    List<Message> receivedMessages;
+    private List<Message> receivedMessages;
 
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -168,5 +168,29 @@ public class User {
 
     public void setProfile(Profile profile) {
         this.profile = profile;
+    }
+
+    public List<Message> getSentMessages() {
+        return sentMessages;
+    }
+
+    public void setSentMessages(List<Message> sentMessages) {
+        this.sentMessages = sentMessages;
+    }
+
+    public List<Message> getReceivedMessages() {
+        return receivedMessages;
+    }
+
+    public void setReceivedMessages(List<Message> receivedMessages) {
+        this.receivedMessages = receivedMessages;
+    }
+
+    public List<Image> getImages() {
+        return images;
+    }
+
+    public void setImages(List<Image> images) {
+        this.images = images;
     }
 }

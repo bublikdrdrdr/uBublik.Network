@@ -5,13 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ubublik.network.exceptions.*;
-import ubublik.network.models.Gender;
-import ubublik.network.models.Profile;
+import ubublik.network.models.*;
+import ubublik.network.models.converters.ImageConverter;
 import ubublik.network.models.dao.FriendsDao;
+import ubublik.network.models.dao.ImageDao;
 import ubublik.network.models.dao.ProfileDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
+import ubublik.network.rest.entities.Image;
+import ubublik.network.rest.entities.Message;
+import ubublik.network.rest.entities.Post;
 import ubublik.network.security.jwt.TokenUser;
 
 import java.util.ArrayList;
@@ -37,10 +41,15 @@ public class ApiServiceImpl implements ApiService{
     FriendsDao friendsDao;
 
     @Autowired
+    ImageDao imageDao;
+
+    @Autowired
     TokenUserService tokenUserService;
 
-    private ubublik.network.models.security.User getMySecurityUser() throws HibernateException, UnauthorizedException{
-        return userDao.getUserById(tokenUserService.findMe().getId());
+    private ubublik.network.models.security.User getMySecurityUser() throws HibernateException, UnauthorizedException, EntityNotFoundException {
+        ubublik.network.models.security.User me = userDao.getUserById(tokenUserService.findMe().getId());
+        if (me==null) throw new  EntityNotFoundException("Can't find logged user");
+        return me;
     }
 
     private PagingRequest fixPagingRequest(PagingRequest pagingRequest, int defaultOffset, int defaultSize){
@@ -203,8 +212,12 @@ public class ApiServiceImpl implements ApiService{
     @Override
     public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException{
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
-        // TODO: 22-Jun-17 add checking friends
-        if (user==null) throw new EntityNotFoundException("Can't find logged user");
+        if (user==null) throw new EntityNotFoundException("Can't find user");
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!SocialNetworkProperties.friendsArePublic)
+            if (!friendsDao.haveFriendRelation(me, user))
+            throw new AccessDeniedException("Access denied, the user is not your friend");
+
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
         List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
         UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
@@ -228,6 +241,7 @@ public class ApiServiceImpl implements ApiService{
                 ubublik.network.models.security.User listOwner;
                 if (search.getSource_id()!=null) {
                     listOwner = userDao.getUserById(search.getSource_id());
+                    if (listOwner==null) throw new EntityNotFoundException("Can't find logged user");
                     ubublik.network.models.security.User me = getMySecurityUser();
                     if (!me.getId().equals(search.getSource_id())){
                         if (!SocialNetworkProperties.friendsArePublic){
@@ -246,14 +260,26 @@ public class ApiServiceImpl implements ApiService{
         }
     }
 
+    private ImageConverter imageConverter = new ImageConverter();
+
     @Override
-    public Image getImage(long id) {
-        return null;
+    public Image getImage(long id) throws EntityNotFoundException {
+        ubublik.network.models.Image im = imageDao.getImageById(id);
+        if (im==null) throw new EntityNotFoundException("Image does not exist");
+        return new Image(im.getId(), im.getOwner().getId(), imageConverter.convertToEntityAttribute(im.getData()),im.getAdded(), im.getDescription());
     }
 
     @Override
-    public UserImagesList getUserImages(PagingRequest pagingRequest) {
-        return null;
+    public UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException {
+        pagingRequest = fixPagingRequest(pagingRequest, defaultImageListOffset, defaultImageListSize);
+        ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
+        if (user==null) throw new EntityNotFoundException("Can't find user");
+        UserImagesList userImagesList = new UserImagesList(user.getId());
+        List<ProfilePicture> list = imageDao.getProfilePictures(user, pagingRequest.getOffset(), pagingRequest.getSize());
+        for (ProfilePicture picture : list) {
+            userImagesList.addImageId(picture.getImage().getId());
+        }
+        return userImagesList;
     }
 
     @Override

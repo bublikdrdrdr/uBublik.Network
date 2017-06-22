@@ -1,5 +1,6 @@
 package ubublik.network.rest.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -9,6 +10,11 @@ public class UserImagesList {
 
     private Long id;
     private List<Long> image_ids;
+
+    public UserImagesList(Long id) {
+        this.id = id;
+        this.image_ids = new ArrayList<>();
+    }
 
     public UserImagesList(Long id, List<Long> image_ids) {
         this.id = id;

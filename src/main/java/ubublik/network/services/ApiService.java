@@ -21,8 +21,8 @@ public interface ApiService {
     UserList getMyFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
     UserList getUserFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
     UserList search(Search search) throws EntityNotFoundException;
-    Image getImage(long id);
-    UserImagesList getUserImages(PagingRequest pagingRequest);
+    Image getImage(long id) throws EntityNotFoundException;
+    UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException;
     UserList getFriendsRequests(PagingRequest pagingRequest);
     UserList getOutgoingFriendsRequests(PagingRequest pagingRequest);
     Status addFriend(long id);

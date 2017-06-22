@@ -61,7 +61,7 @@ public class ImageDao {
         }
     }
 
-    public List<ProfilePicture> getProfilePictures(User user){
+    public List<ProfilePicture> getProfilePictures(User user, int offset, int size){
         Session session = HibernateUtil.getSession();
         try{
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -71,7 +71,7 @@ public class ImageDao {
             criteriaQuery.where(criteriaBuilder.equal(profilePictureRoot.get("user"), user));
             criteriaQuery.select(profilePictureRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getResultList();
+            return session.createQuery(criteriaQuery).setFirstResult(offset).setMaxResults(size).getResultList();
         } catch (Exception e){
             throw e;
         } finally {

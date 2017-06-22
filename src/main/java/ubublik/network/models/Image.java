@@ -1,6 +1,7 @@
 package ubublik.network.models;
 
 
+import org.springframework.context.annotation.Lazy;
 import ubublik.network.models.security.User;
 
 import javax.persistence.*;
@@ -16,6 +17,7 @@ public class Image {
     private Long id;
 
     @Column(name = "data")
+    @Lazy // TODO: 22-Jun-17 check is this works
    // @Convert(converter = ImageConverter.class)
     private byte[] data;
 
