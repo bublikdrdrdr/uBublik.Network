@@ -3,6 +3,7 @@ package ubublik.network.services;
 
 import ubublik.network.exceptions.DisabledUserException;
 import ubublik.network.exceptions.EntityNotFoundException;
+import ubublik.network.exceptions.NetworkLogicException;
 import ubublik.network.rest.entities.*;
 
 import java.util.Date;
@@ -23,10 +24,10 @@ public interface ApiService {
     UserList search(Search search) throws EntityNotFoundException;
     Image getImage(long id) throws EntityNotFoundException;
     UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException;
-    UserList getFriendsRequests(PagingRequest pagingRequest);
-    UserList getOutgoingFriendsRequests(PagingRequest pagingRequest);
-    Status addFriend(long id);
-    Status removeFriend(long id);//same as cancel request
+    UserList getFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException;
+    UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException;
+    Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException;
+    Status removeFriend(long id) throws EntityNotFoundException;//same as cancel request
     DialogList getDialogs(PagingRequest pagingRequest);
     Status removeDialog(long userId);
     Boolean checkNewMessages(Date lastUpdate);

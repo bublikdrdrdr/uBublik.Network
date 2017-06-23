@@ -5,7 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ubublik.network.exceptions.*;
-import ubublik.network.models.*;
+import ubublik.network.models.FriendRelation;
+import ubublik.network.models.Gender;
+import ubublik.network.models.Profile;
+import ubublik.network.models.ProfilePicture;
 import ubublik.network.models.converters.ImageConverter;
 import ubublik.network.models.dao.FriendsDao;
 import ubublik.network.models.dao.ImageDao;
@@ -13,9 +16,6 @@ import ubublik.network.models.dao.ProfileDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
-import ubublik.network.rest.entities.Image;
-import ubublik.network.rest.entities.Message;
-import ubublik.network.rest.entities.Post;
 import ubublik.network.security.jwt.TokenUser;
 
 import java.util.ArrayList;
@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static ubublik.network.properties.SocialNetworkProperties.*;
+import static ubublik.network.rest.entities.StatusFactory.StatusCode.*;
+
 
 /**
  * Created by Bublik on 18-Jun-17.
@@ -195,7 +197,7 @@ public class ApiServiceImpl implements ApiService{
                 userDetails.getPhone()
         );
         profileDao.editProfile(profile);
-        return StatusFactory.getStatus(StatusFactory.StatusCode.OK);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
@@ -263,14 +265,14 @@ public class ApiServiceImpl implements ApiService{
     private ImageConverter imageConverter = new ImageConverter();
 
     @Override
-    public Image getImage(long id) throws EntityNotFoundException {
+    public Image getImage(long id) throws EntityNotFoundException, HibernateException {
         ubublik.network.models.Image im = imageDao.getImageById(id);
         if (im==null) throw new EntityNotFoundException("Image does not exist");
         return new Image(im.getId(), im.getOwner().getId(), imageConverter.convertToEntityAttribute(im.getData()),im.getAdded(), im.getDescription());
     }
 
     @Override
-    public UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException {
+    public UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException, HibernateException {
         pagingRequest = fixPagingRequest(pagingRequest, defaultImageListOffset, defaultImageListSize);
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
         if (user==null) throw new EntityNotFoundException("Can't find user");
@@ -283,23 +285,69 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getFriendsRequests(PagingRequest pagingRequest) {
+    public UserList getFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException, HibernateException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        List<ubublik.network.models.security.User> users = friendsDao.getIncomingFriendRequests(me, pagingRequest, false);
+        return new UserList(friendsDao.getIncomingFriendRequestsCount(me, false), toRestUsers(users));
+    }
+
+    @Override
+    public UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        List<ubublik.network.models.security.User> users = friendsDao.getOutgoingFriendRequests(me, pagingRequest, false);
+        return new UserList(friendsDao.getOutgoingFriendRequestsCount(me, false), toRestUsers(users));
+    }
+
+    @Override
+    public Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new EntityNotFoundException("Can't find user");
+
+        if (friendsDao.haveFriendRelation(me, user))
+            return StatusFactory.getStatus(USER_ALREADY_YOUR_FRIEND);  //throw new NetworkLogicException("User is already in friends list");
+        if (friendsDao.getFriendRelationByUsers(me, user)!=null)
+            return StatusFactory.getStatus(REQUEST_ALREADY_SENT);
+
+        FriendRelation incoming = friendsDao.getFriendRelationByUsers(user, me);
+        if (incoming!=null){
+            //accept friend request
+            incoming.setCanceled(false);
+            friendsDao.saveFriendRelation(incoming);
+            friendsDao.saveFriendRelation(new FriendRelation(me, user, false, new Date()));
+            return StatusFactory.getStatus(OK);
+        } else {
+            //send request
+            friendsDao.saveFriendRelation(new FriendRelation(me, user, false, new Date()));
+            StatusFactory.getStatus(OK);
+        }
         return null;
     }
 
     @Override
-    public UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) {
-        return null;
-    }
-
-    @Override
-    public Status addFriend(long id) {
-        return null;
-    }
-
-    @Override
-    public Status removeFriend(long id) {
-        return null;
+    public Status removeFriend(long id) throws EntityNotFoundException, HibernateException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new EntityNotFoundException("Can't find user");
+        /*TODO: 23-Jun-17 separate getMe entity not found exception and getUserById exception
+        because if service user sent wrong id, it's ok, but if user is logged, but DB entity not found... it's a different situation
+         */
+        FriendRelation outgoing = friendsDao.getFriendRelationByUsers(me, user);
+        FriendRelation incoming = friendsDao.getFriendRelationByUsers(user, me);
+        if (incoming!=null){
+            incoming.setCanceled(true);
+            friendsDao.saveFriendRelation(incoming);
+            if (outgoing!=null){
+                friendsDao.removeFriendRelation(outgoing);
+            }
+        } else {
+            if (outgoing!=null){
+                friendsDao.removeFriendRelation(outgoing);
+            } else {
+                return StatusFactory.getStatus(USER_IS_NOT_YOUR_FRIEND);
+            }
+        }
+        return StatusFactory.getStatus(OK);
     }
 
     @Override

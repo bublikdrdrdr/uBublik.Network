@@ -11,6 +11,7 @@ import ubublik.network.models.*;
 import ubublik.network.models.security.Role;
 import ubublik.network.models.security.User;
 
+import javax.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,4 +64,8 @@ public class HibernateUtil {
             if (sessionFactory==null) throw new HibernateException("SessionFactory is null");
             return sessionFactory.openSession();
         }
+
+    public static EntityManager getEntityManager(){
+        return getSession().getEntityManagerFactory().createEntityManager();
+    }
 }

@@ -1,6 +1,7 @@
 package ubublik.network.models.dao;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NonUniqueResultException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.stereotype.Repository;
@@ -9,10 +10,13 @@ import ubublik.network.db.HibernateUtil;
 import ubublik.network.models.FriendRelation;
 import ubublik.network.models.Gender;
 import ubublik.network.models.security.User;
+import ubublik.network.rest.entities.PagingRequest;
 import ubublik.network.rest.entities.Search;
 import ubublik.network.rest.entities.SearchOrder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -33,6 +37,32 @@ public class FriendsDao {
         try{
             return session.get(FriendRelation.class, id);
         } catch (Exception e){
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public FriendRelation getFriendRelationByUsers(User sender, User receiver) throws HibernateException{
+        Session session = HibernateUtil.getSession();
+        try {
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<FriendRelation> criteriaQuery = criteriaBuilder.createQuery(FriendRelation.class);
+            Root<FriendRelation> friendRelationRoot = criteriaQuery.from(FriendRelation.class);
+            criteriaQuery.where(
+                    criteriaBuilder.or(
+                            criteriaBuilder.equal(friendRelationRoot.get("sender"), sender),
+                            criteriaBuilder.equal(friendRelationRoot.get("receiver"), receiver)
+                    )
+            );
+            criteriaQuery.select(friendRelationRoot);
+            criteriaQuery.distinct(true);
+            return session.createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        } catch (NonUniqueResultException nure){
+            throw new HibernateException("getFriendRelation method error");
+        } catch (Exception e) {
             throw e;
         } finally {
             session.close();
@@ -89,7 +119,7 @@ public class FriendsDao {
         }
     }
 
-    public List<FriendRelation> getOutgoingFriendRequests(User user){
+    public List<FriendRelation> getOutgoingFriendRelations(User user){
         Session session = HibernateUtil.getSession();
         try {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -106,7 +136,7 @@ public class FriendsDao {
         }
     }
 
-    public List<FriendRelation> getIncomingFriendRequests(User user){
+    public List<FriendRelation> getIncomingFriendRelations(User user){
         Session session = HibernateUtil.getSession();
         try {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -116,6 +146,104 @@ public class FriendsDao {
             criteriaQuery.select(friendRelationRoot);
             criteriaQuery.distinct(true);
             return session.createQuery(criteriaQuery).getResultList();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public int getIncomingFriendRequestsCount(User user, boolean ignoreCanceled){
+        Session session = HibernateUtil.getSession();
+        try {
+            EntityManager em = HibernateUtil.getEntityManager();
+            String sql = "SELECT COUNT(ffr.sender) " +
+                    "FROM FriendRelation ffr\n" +
+                    "WHERE (ffr.receiver= :user) and " +
+                    "(SELECT COUNT(*) FROM FriendRelation sfr " +
+                    "WHERE sfr.sender=ffr.receiver " +
+                    "and sfr.receiver=ffr.sender)=0";
+            if (!ignoreCanceled){
+                sql+=" AND (ffr.canceled <> 1)";
+            }
+            Query query = em.createQuery(sql);
+            query.setParameter("user", user);
+            return ((Long)query.getSingleResult()).intValue();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public List<User> getIncomingFriendRequests(User user, PagingRequest pagingRequest, boolean ignoreCanceled){
+        Session session = HibernateUtil.getSession();
+
+        try {
+            EntityManager em = HibernateUtil.getEntityManager();
+            String sql = "SELECT ffr.sender " +
+                    "FROM FriendRelation ffr\n" +
+                    "WHERE (ffr.receiver= :user) and " +
+                    "(SELECT COUNT(*) FROM FriendRelation sfr " +
+                    "WHERE sfr.sender=ffr.receiver " +
+                    "and sfr.receiver=ffr.sender)=0";
+            if (!ignoreCanceled){
+                sql+=" AND (ffr.canceled <> 1)";
+            }
+            Query query = em.createQuery(sql);
+            query.setParameter("user", user);
+            query.setFirstResult(pagingRequest.getOffset());
+            query.setMaxResults(pagingRequest.getSize());
+            return (List<User>) query.getResultList();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public int getOutgoingFriendRequestsCount(User user, boolean ignoreCanceled){
+        Session session = HibernateUtil.getSession();
+        try {
+            EntityManager em = HibernateUtil.getEntityManager();
+            String sql = "SELECT COUNT(ffr.receiver) " +
+                    "FROM FriendRelation ffr\n" +
+                    "WHERE (ffr.sender= :user) and " +
+                    "(SELECT COUNT(*) FROM FriendRelation sfr " +
+                    "WHERE sfr.sender=ffr.receiver " +
+                    "and sfr.receiver=ffr.sender)=0";
+            if (!ignoreCanceled){
+                sql+=" AND (ffr.canceled <> 1)";
+            }
+            Query query = em.createQuery(sql);
+            query.setParameter("user", user);
+            return ((Long)query.getSingleResult()).intValue();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    public List<User> getOutgoingFriendRequests(User user, PagingRequest pagingRequest, boolean ignoreCanceled){
+        Session session = HibernateUtil.getSession();
+
+        try {
+            EntityManager em = HibernateUtil.getEntityManager();
+            String sql = "SELECT ffr.receiver " +
+                    "FROM FriendRelation ffr\n" +
+                    "WHERE (ffr.sender= :user) and " +
+                    "(SELECT COUNT(*) FROM FriendRelation sfr " +
+                    "WHERE sfr.sender=ffr.receiver " +
+                    "and sfr.receiver=ffr.sender)=0";
+            if (!ignoreCanceled){
+                sql+=" AND (ffr.canceled <> 1)";
+            }
+            Query query = em.createQuery(sql);
+            query.setParameter("user", user);
+            query.setFirstResult(pagingRequest.getOffset());
+            query.setMaxResults(pagingRequest.getSize());
+            return (List<User>) query.getResultList();
         } catch (Exception e) {
             throw e;
         } finally {
