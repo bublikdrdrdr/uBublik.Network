@@ -12,16 +12,14 @@ import ubublik.network.models.ProfilePicture;
 import ubublik.network.models.converters.ImageConverter;
 import ubublik.network.models.dao.FriendsDao;
 import ubublik.network.models.dao.ImageDao;
+import ubublik.network.models.dao.MessageDao;
 import ubublik.network.models.dao.ProfileDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
 import ubublik.network.security.jwt.TokenUser;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static ubublik.network.properties.SocialNetworkProperties.*;
 import static ubublik.network.rest.entities.StatusFactory.StatusCode.*;
@@ -46,9 +44,15 @@ public class ApiServiceImpl implements ApiService{
     ImageDao imageDao;
 
     @Autowired
+    MessageDao messageDao;
+
+    @Autowired
     TokenUserService tokenUserService;
 
     private ubublik.network.models.security.User getMySecurityUser() throws HibernateException, UnauthorizedException, EntityNotFoundException {
+        //todo: test
+        if (true) return userDao.getUserById(4);
+
         ubublik.network.models.security.User me = userDao.getUserById(tokenUserService.findMe().getId());
         if (me==null) throw new  EntityNotFoundException("Can't find logged user");
         return me;
@@ -351,8 +355,25 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public DialogList getDialogs(PagingRequest pagingRequest) {
-        return null;
+    public DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException {
+        ubublik.network.models.security.User user = getMySecurityUser();
+        pagingRequest = fixPagingRequest(pagingRequest, defaultDialogListOffset, defaultDialogListSize);
+        DialogList dialogList = new DialogList(0/*messageDao.getDialogsCount(user)*/);
+        List<ubublik.network.models.Message> rawMessages = messageDao.getDialogs(user, pagingRequest.getOffset(), pagingRequest.getSize());
+        for (ubublik.network.models.Message message:rawMessages) {
+            ubublik.network.models.security.User currentUser = message.getSender();
+            if (Objects.equals(currentUser.getId(), user.getId())){
+                currentUser = message.getReceiver();
+            }
+            dialogList.addDialog(new Dialog(
+                    currentUser.getId(),
+                    currentUser.getName(),
+                    currentUser.getSurname(),
+                    message.getMessage(),
+                    message.getMessageDate()
+            ));
+        }
+        return dialogList;
     }
 
     @Override
@@ -361,8 +382,10 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Boolean checkNewMessages(Date lastUpdate) {
-        return null;
+    public Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException, UnauthorizedException {
+        ubublik.network.models.Message message = messageDao.getLastMessage(getMySecurityUser());
+        if (lastUpdate==null) throw new IllegalArgumentException("Date can't be null");
+        return lastUpdate.before(message.getMessageDate());
     }
 
     @Override

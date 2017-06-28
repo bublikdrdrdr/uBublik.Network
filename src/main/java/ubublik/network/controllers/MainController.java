@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import ubublik.network.models.dao.MessageDao;
+import ubublik.network.rest.entities.PagingRequest;
 import ubublik.network.services.ApiService;
 import ubublik.network.services.TokenUserService;
 
@@ -19,6 +21,9 @@ public class MainController {
     @Autowired
     ApiService apiService;
 
+    @Autowired
+    MessageDao messageDao;
+
 
     @RequestMapping("/me")
     public String me(){
@@ -30,7 +35,8 @@ public class MainController {
         long t = System.currentTimeMillis();
        // UserList fr = apiService.getMyFriends(new PagingRequest(4L, 0L, 1l));
         //Object o = apiService.getUserFriends(new PagingRequest(4L,null, null));
-        Object o = apiService.getImage(3);
+        Object o = apiService.getDialogs(new PagingRequest(null, null, null));
+                // apiService.getImage(3);
         System.out.println(System.currentTimeMillis()-t);
         return o;
         //Image image = new  Image(new byte[]{0,1,2,3}, false, null, userDao.getUserByNickname("bublik") , new Date());

@@ -28,9 +28,9 @@ public interface ApiService {
     UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException;
     Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException;
     Status removeFriend(long id) throws EntityNotFoundException;//same as cancel request
-    DialogList getDialogs(PagingRequest pagingRequest);
+    DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException;
     Status removeDialog(long userId);
-    Boolean checkNewMessages(Date lastUpdate);
+    Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException;
     MessageList getMessages(PagingRequest pagingRequest);
     MessageList updateDialog(long lastMessage);
     Status removeMessage(long id);

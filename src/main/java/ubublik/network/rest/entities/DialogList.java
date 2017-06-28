@@ -1,5 +1,6 @@
 package ubublik.network.rest.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -7,24 +8,29 @@ import java.util.List;
  */
 public class DialogList {
 
-    private Long count;
+    private Integer count;
 
     private List<Dialog> items;
 
-    public DialogList(Long count, List<Dialog> items) {
+    public DialogList(Integer count, List<Dialog> items) {
         this.count = count;
         this.items = items;
+    }
+
+    public DialogList(Integer count) {
+        this.count = count;
+        this.items = new ArrayList<>();
     }
 
     public void addDialog(Dialog dialog){
         items.add(dialog);
     }
 
-    public Long getCount() {
+    public Integer getCount() {
         return count;
     }
 
-    public void setCount(Long count) {
+    public void setCount(Integer count) {
         this.count = count;
     }
 

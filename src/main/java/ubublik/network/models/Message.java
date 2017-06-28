@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name="profiles")
+@Table(name="messages")
 public class Message {
 
     @Id
@@ -23,13 +23,16 @@ public class Message {
     private User receiver;
 
     @Column(name = "message")
-    String message;
+    private String message;
 
     @Column(name = "deleted_by_sender")
-    Boolean deletedBySender;
+    private Boolean deletedBySender;
 
     @Column(name = "deleted_by_receiver")
-    Boolean deletedByReceiver;
+    private Boolean deletedByReceiver;
+
+    @Column(name = "seen")
+    private Boolean seen;
 
     @Column(name = "message_date")
     private Date messageDate;
@@ -37,12 +40,13 @@ public class Message {
     public Message() {
     }
 
-    public Message(User sender, User receiver, String message, Boolean deletedBySender, Boolean deletedByReceiver, Date messageDate) {
+    public Message(User sender, User receiver, String message, Boolean deletedBySender, Boolean deletedByReceiver, Boolean seen, Date messageDate) {
         this.sender = sender;
         this.receiver = receiver;
         this.message = message;
         this.deletedBySender = deletedBySender;
         this.deletedByReceiver = deletedByReceiver;
+        this.seen = seen;
         this.messageDate = messageDate;
     }
 
@@ -110,5 +114,13 @@ public class Message {
 
     public void setMessageDate(Date messageDate) {
         this.messageDate = messageDate;
+    }
+
+    public Boolean getSeen() {
+        return seen;
+    }
+
+    public void setSeen(Boolean seen) {
+        this.seen = seen;
     }
 }

@@ -15,4 +15,6 @@ public class SocialNetworkProperties {
     public static final int defaultSearchListSize = defaultFriendListSize;
     public static final int defaultImageListOffset = 0;
     public static final int defaultImageListSize = 50;
+    public static final int defaultDialogListOffset = 0;
+    public static final int defaultDialogListSize = 20;
 }
