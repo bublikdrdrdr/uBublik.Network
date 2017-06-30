@@ -89,15 +89,27 @@ public class MessageDao {
         }
     }
 
-    public List<Message> getDialogMessages(User owner, User friend, int offset, int count)//змінити назву собеседника
+    public Integer getDialogMessagesCount(User owner, User user)
+    {
+        EntityManager em = HibernateUtil.getEntityManager();
+        String sql = "SELECT COUNT(m.id) FROM Messages m\n" +
+                "WHERE \n" +
+                "(m.sender=:me AND m.receiver=:user AND m.deletedBySender=0) OR (m.sender=:user and m.receiver=:me and m.deletedByReceiver=0)";
+        Query query = em.createQuery(sql);
+        query.setParameter("user", user);
+        query.setParameter("me", owner);
+        return ((Number)query.getResultList()).intValue();
+    }
+
+    public List<Message> getDialogMessages(User owner, User user, int offset, int count)
     {
         EntityManager em = HibernateUtil.getEntityManager();
         String sql = "SELECT * FROM Messages m\n" +
                 "WHERE \n" +
                 "(m.sender=:me AND m.receiver=:user AND m.deletedBySender=0) OR (m.sender=:user and m.receiver=:me and m.deletedByReceiver=0)" +
-                "ORDER BY m.messageDate";// TODO: 28-Jun-17 try to order by id
+                "ORDER BY m.id";
         Query query = em.createQuery(sql);
-        query.setParameter("user", friend);
+        query.setParameter("user", user);
         query.setParameter("me", owner);
         query.setFirstResult(offset);
         query.setMaxResults(count);
@@ -142,6 +154,32 @@ ORDER BY max_date desc
                 "ORDER BY max_date desc");
         query.setParameter("user", owner);
         return ((Number)query.getSingleResult()).intValue();
+    }
+
+    public int removeDialog(User owner, User user){
+        Session session = HibernateUtil.getSession();
+        try {
+            int count = 0;
+            EntityManager em = HibernateUtil.getEntityManager();
+            String sql = "UPDATE Message m SET deletedBySender = '1'" +
+                    "WHERE (m.sender=:me AND m.receiver=:user AND m.deletedBySender=0)";
+            Query query = em.createQuery(sql);
+            query.setParameter("me", owner);
+            query.setParameter("user", user);
+            count+= query.executeUpdate();
+
+            sql = "UPDATE Message m SET deletedByReceiver = '1'" +
+                    "WHERE (m.receiver=:me AND m.sender=:user AND m.deletedByReceiver=0)";
+            query = em.createQuery(sql);
+            query.setParameter("me", owner);
+            query.setParameter("user", user);
+            count+=query.executeUpdate();
+            return count;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            session.close();
+        }
     }
 
 }

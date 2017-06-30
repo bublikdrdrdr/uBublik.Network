@@ -377,8 +377,10 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeDialog(long userId) {
-        return null;
+    public Status removeDialog(long userId) throws EntityNotFoundException {
+        if (messageDao.removeDialog(getMySecurityUser(), userDao.getUserById(userId))>0)
+            return StatusFactory.getStatus(OK); else
+            return StatusFactory.getStatus(DIALOG_IS_EMPTY);
     }
 
     @Override
@@ -389,28 +391,58 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public MessageList getMessages(PagingRequest pagingRequest) {
-        return null;
+    public MessageList getMessages(PagingRequest pagingRequest) throws EntityNotFoundException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
+        pagingRequest = fixPagingRequest(pagingRequest, defaultMessageListOffset, defaultMessageListSize);
+        MessageList messageList = new MessageList(messageDao.getDialogMessagesCount(me, user));
+        List<ubublik.network.models.Message> list = messageDao.getDialogMessages(me, user, pagingRequest.getOffset(), pagingRequest.getSize());
+        for (ubublik.network.models.Message message:list) {
+            messageList.addItem(new Message(
+                    message.getId(),
+                    message.getSender().getId(),
+                    message.getMessageDate(),
+                    message.getSeen(),
+                    message.getMessage()
+            ));
+        }
+        return messageList;
     }
 
     @Override
-    public MessageList updateDialog(long lastMessage) {
-        return null;
+    public Status removeMessage(long id) throws EntityNotFoundException {
+        return setMessageStatus(id, true);
     }
 
     @Override
-    public Status removeMessage(long id) {
-        return null;
+    public Status restoreMessage(long id) throws EntityNotFoundException {
+        return setMessageStatus(id, false);
+    }
+
+    private Status setMessageStatus(long id, boolean deleted) throws EntityNotFoundException {
+        ubublik.network.models.security.User user = getMySecurityUser();
+        ubublik.network.models.Message message = messageDao.getMessageById(id);
+        if (message==null) throw new EntityNotFoundException("Message not found");
+        if (Objects.equals(message.getSender().getId(), user.getId()))
+            message.setDeletedBySender(deleted);
+        else if (Objects.equals(message.getReceiver().getId(), user.getId()))
+            message.setDeletedByReceiver(deleted); else
+            throw new AccessDeniedException("User is not an owner of this message");
+        messageDao.saveMessage(message);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
-    public Status restoreMessage(long id) {
-        return null;
-    }
-
-    @Override
-    public Message sendMessage(Message message) {
-        return null;
+    public Message sendMessage(Message message) throws EntityNotFoundException {
+        if (message.getText().length()>messageMaxLength) throw new IllegalArgumentException("Message is too long");
+        ubublik.network.models.security.User me = getMySecurityUser();
+        ubublik.network.models.security.User receiver = userDao.getUserById(message.getDialog_user_id());
+        if (receiver==null) throw new EntityNotFoundException("User not found");
+        if (SocialNetworkProperties.sendMessageToFriendOnly && !friendsDao.haveFriendRelation(me, receiver)) throw new AccessDeniedException("User is not your friend");
+        ubublik.network.models.Message dbMessage = new ubublik.network.models.Message(me, receiver, message.getText(), false, false, false, new Date());
+        long id = messageDao.saveMessage(dbMessage);
+        dbMessage = messageDao.getMessageById(id);
+        return new Message(id, dbMessage.getReceiver().getId(), dbMessage.getMessageDate(), dbMessage.getSeen(), dbMessage.getMessage());
     }
 
     @Override
@@ -462,4 +494,6 @@ public class ApiServiceImpl implements ApiService{
     public Status removeProfile(long id) {
         return null;
     }
+
+    //// TODO: 30-Jun-17 check exceptions for all methods
 }

@@ -8,16 +8,15 @@ import java.util.Date;
 public class Message {
 
     private Long id;
-    private Long dialog_user_id;
-    private Boolean received;//true - sb sent it to me, false - I sent it to sb
+    private Long dialog_user_id;//who sent the message
+    //private Boolean received;//true - sb sent it to me, false - I sent it to sb
     private Date date;
     private Boolean seen;
     private String text;
 
-    public Message(Long id, Long dialog_user_id, Boolean received, Date date, Boolean seen, String text) {
+    public Message(Long id, Long dialog_user_id, Date date, Boolean seen, String text) {
         this.id = id;
         this.dialog_user_id = dialog_user_id;
-        this.received = received;
         this.date = date;
         this.seen = seen;
         this.text = text;
@@ -37,14 +36,6 @@ public class Message {
 
     public void setDialog_user_id(Long dialog_user_id) {
         this.dialog_user_id = dialog_user_id;
-    }
-
-    public Boolean isReceived() {
-        return received;
-    }
-
-    public void setReceived(Boolean received) {
-        this.received = received;
     }
 
     public Date getDate() {

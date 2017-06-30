@@ -1,5 +1,6 @@
 package ubublik.network.rest.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -7,19 +8,28 @@ import java.util.List;
  */
 public class MessageList {
 
-    private Long count;
-    List<Message> items;
+    private Integer count;
+    private List<Message> items;
 
-    public MessageList(Long count, List<Message> items) {
+    public MessageList(Integer count, List<Message> items) {
         this.count = count;
         this.items = items;
     }
 
-    public Long getCount() {
+    public MessageList(Integer count){
+        this.count = count;
+        this.items = new ArrayList<>();
+    }
+
+    public void addItem(Message message){
+        this.items.add(message);
+    }
+
+    public Integer getCount() {
         return count;
     }
 
-    public void setCount(Long count) {
+    public void setCount(Integer count) {
         this.count = count;
     }
 

@@ -29,13 +29,13 @@ public interface ApiService {
     Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException;
     Status removeFriend(long id) throws EntityNotFoundException;//same as cancel request
     DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException;
-    Status removeDialog(long userId);
+    Status removeDialog(long userId) throws EntityNotFoundException;
     Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException;
-    MessageList getMessages(PagingRequest pagingRequest);
-    MessageList updateDialog(long lastMessage);
-    Status removeMessage(long id);
-    Status restoreMessage(long id);
-    Message sendMessage(Message message);//as a request use only text and dialog_user_id
+    MessageList getMessages(PagingRequest pagingRequest) throws EntityNotFoundException;
+    //MessageList updateDialog(long lastMessage) throws EntityNotFoundException;//??i forgot wtf is going on
+    Status removeMessage(long id) throws EntityNotFoundException;
+    Status restoreMessage(long id) throws EntityNotFoundException;
+    Message sendMessage(Message message) throws EntityNotFoundException;//as a request use only text and dialog_user_id
     PostList getUserPosts(PagingRequest pagingRequest);
     Post getPost(long id);
     Post addPost(Post post);
