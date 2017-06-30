@@ -358,7 +358,7 @@ public class ApiServiceImpl implements ApiService{
     public DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException {
         ubublik.network.models.security.User user = getMySecurityUser();
         pagingRequest = fixPagingRequest(pagingRequest, defaultDialogListOffset, defaultDialogListSize);
-        DialogList dialogList = new DialogList(0/*messageDao.getDialogsCount(user)*/);
+        DialogList dialogList = new DialogList(messageDao.getDialogsCount(user));
         List<ubublik.network.models.Message> rawMessages = messageDao.getDialogs(user, pagingRequest.getOffset(), pagingRequest.getSize());
         for (ubublik.network.models.Message message:rawMessages) {
             ubublik.network.models.security.User currentUser = message.getSender();
