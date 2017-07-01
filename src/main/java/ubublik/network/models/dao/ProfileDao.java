@@ -16,6 +16,8 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public class ProfileDao{
+    
+    //// TODO: 30-Jun-17 use @PersistenceContext for EntityManager and Session
 
     @Autowired
     UserDataValidator userDataValidator;

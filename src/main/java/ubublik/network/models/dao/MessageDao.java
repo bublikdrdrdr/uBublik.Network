@@ -103,7 +103,7 @@ public class MessageDao {
 
     public List<Message> getDialogMessages(User owner, User user, int offset, int count)
     {
-        EntityManager em = HibernateUtil.getEntityManager();
+        EntityManager em = HibernateUtil.getEntityManager();// TODO: 02-Jul-17 entity name is MessageS (with s in the end), check it
         String sql = "SELECT * FROM Messages m\n" +
                 "WHERE \n" +
                 "(m.sender=:me AND m.receiver=:user AND m.deletedBySender=0) OR (m.sender=:user and m.receiver=:me and m.deletedByReceiver=0)" +

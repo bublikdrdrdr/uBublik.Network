@@ -36,8 +36,8 @@ public interface ApiService {
     Status removeMessage(long id) throws EntityNotFoundException;
     Status restoreMessage(long id) throws EntityNotFoundException;
     Message sendMessage(Message message) throws EntityNotFoundException;//as a request use only text and dialog_user_id
-    PostList getUserPosts(PagingRequest pagingRequest);
-    Post getPost(long id);
+    PostList getUserPosts(PagingRequest pagingRequest) throws EntityNotFoundException;
+    Post getPost(long id) throws EntityNotFoundException;
     Post addPost(Post post);
     Status removePost(long id);
 

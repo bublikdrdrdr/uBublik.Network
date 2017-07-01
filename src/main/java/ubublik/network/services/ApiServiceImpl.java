@@ -10,10 +10,7 @@ import ubublik.network.models.Gender;
 import ubublik.network.models.Profile;
 import ubublik.network.models.ProfilePicture;
 import ubublik.network.models.converters.ImageConverter;
-import ubublik.network.models.dao.FriendsDao;
-import ubublik.network.models.dao.ImageDao;
-import ubublik.network.models.dao.MessageDao;
-import ubublik.network.models.dao.ProfileDao;
+import ubublik.network.models.dao.*;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
@@ -45,6 +42,9 @@ public class ApiServiceImpl implements ApiService{
 
     @Autowired
     MessageDao messageDao;
+
+    @Autowired
+    PostDao postDao;
 
     @Autowired
     TokenUserService tokenUserService;
@@ -446,13 +446,37 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public PostList getUserPosts(PagingRequest pagingRequest) {
-        return null;
+    public PostList getUserPosts(PagingRequest pagingRequest) throws EntityNotFoundException {
+        ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
+        if (user==null) throw new EntityNotFoundException("User not found");
+        if (!postsArePublic){
+            ubublik.network.models.security.User me = getMySecurityUser();
+            if (!friendsDao.haveFriendRelation(me, user)) throw new AccessDeniedException("User is not your friend");
+        }
+        pagingRequest = fixPagingRequest(pagingRequest, defaultPostListOffset, defaultPostListSize);
+        List<ubublik.network.models.Post> rawPosts = postDao.getUserPosts(user, pagingRequest.getOffset(), pagingRequest.getSize());
+        PostList postList = new PostList(user.getId(), postDao.getUserPostsCount(user));
+        for (ubublik.network.models.Post post:rawPosts) {
+            postList.addItem(post.getId());
+        }
+        return postList;
     }
 
     @Override
-    public Post getPost(long id) {
-        return null;
+    public Post getPost(long id) throws EntityNotFoundException {
+        ubublik.network.models.Post dbPost = postDao.getPostById(id);
+        if (dbPost==null) throw new EntityNotFoundException("Post not found");
+        if (!postsArePublic){
+            ubublik.network.models.security.User user = dbPost.getUser();
+            ubublik.network.models.security.User me = getMySecurityUser();
+            if (!friendsDao.haveFriendRelation(me, user)) throw new AccessDeniedException("User is not your friend");
+        }
+        List<Long> imagesId = new ArrayList<>();
+        List<ubublik.network.models.Image> dbImages = dbPost.getImages();
+        for (ubublik.network.models.Image image:dbImages) {
+            imagesId.add(image.getId());
+        }
+        return new Post(dbPost.getId(), dbPost.getUser().getId(), dbPost.getContent(),imagesId,dbPost.getDate());
     }
 
     @Override
@@ -496,4 +520,5 @@ public class ApiServiceImpl implements ApiService{
     }
 
     //// TODO: 30-Jun-17 check exceptions for all methods
+    // TODO: 01-Jul-17 check user availability in all methods
 }
