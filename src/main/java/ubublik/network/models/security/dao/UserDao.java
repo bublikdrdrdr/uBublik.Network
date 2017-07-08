@@ -253,5 +253,9 @@ public class UserDao{
             session.close();
         }
     }
+    
+    public User getReportAdmin(){
+        return null;// TODO: 08-Jul-17  
+    }
 
 }

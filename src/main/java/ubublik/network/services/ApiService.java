@@ -38,13 +38,13 @@ public interface ApiService {
     Message sendMessage(Message message) throws EntityNotFoundException;//as a request use only text and dialog_user_id
     PostList getUserPosts(PagingRequest pagingRequest) throws EntityNotFoundException;
     Post getPost(long id) throws EntityNotFoundException;
-    Post addPost(Post post);
-    Status removePost(long id);
+    Post addPost(Post post) throws EntityNotFoundException;
+    Status removePost(long id) throws EntityNotFoundException;
 
-    Status report(Report report);//just sending message to admin
+    Status report(Report report) throws EntityNotFoundException;//just sending message to admin
 
     //admins only
-    Status addProfile(UserDetails userDetails);
+    Status addProfile(UserDetails userDetails) throws EntityNotFoundException;
     Status blockUser(long id);
     Status unblockUser(long id);
     User registerAdmin(UserRegistration userRegistration);

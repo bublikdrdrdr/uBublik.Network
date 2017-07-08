@@ -11,9 +11,12 @@ import ubublik.network.models.Profile;
 import ubublik.network.models.ProfilePicture;
 import ubublik.network.models.converters.ImageConverter;
 import ubublik.network.models.dao.*;
+import ubublik.network.models.security.*;
+import ubublik.network.models.security.dao.RoleDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
+import ubublik.network.rest.entities.User;
 import ubublik.network.security.jwt.TokenUser;
 
 import java.util.*;
@@ -45,6 +48,9 @@ public class ApiServiceImpl implements ApiService{
 
     @Autowired
     PostDao postDao;
+
+    @Autowired
+    RoleDao roleDao;
 
     @Autowired
     TokenUserService tokenUserService;
@@ -480,23 +486,78 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Post addPost(Post post) {
-        return null;
+    public Post addPost(Post post) throws EntityNotFoundException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        List<ubublik.network.models.Image> images = new ArrayList<>();
+        for (Long imageId:post.getImages()) {
+            ubublik.network.models.Image current = imageDao.getImageById(imageId);
+            if (current==null) throw new EntityNotFoundException("Wrong image id");
+            images.add(current);
+        }
+        long id = postDao.savePost(new ubublik.network.models.Post(
+                me, post.getContent(), post.getDate(), images));
+        return getPost(id);
     }
 
     @Override
-    public Status removePost(long id) {
-        return null;
+    public Status removePost(long id) throws EntityNotFoundException {
+        ubublik.network.models.Post dbPost = postDao.getPostById(id);
+        if (dbPost==null) throw new EntityNotFoundException("Post not found");
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!Objects.equals(dbPost.getUser().getId(), me.getId()))
+            throw new AccessDeniedException("User is not an owner of this post");
+        postDao.removePost(dbPost);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
-    public Status report(Report report) {
-        return null;
+    public Status report(Report report) throws EntityNotFoundException {
+        ubublik.network.models.security.User admin = userDao.getReportAdmin();
+        if (admin==null) return StatusFactory.getStatus(SERVICE_UNAVAILABLE);
+        ubublik.network.models.security.User me = getMySecurityUser();
+        messageDao.saveMessage(new ubublik.network.models.Message(
+                me, admin,
+                report.getReport_type() +
+                        (report.getProblem_user_id()==null?"":", user id: "+report.getProblem_user_id().toString())+
+                        ",  " +report.getText(),
+                true, false, false, new Date()
+        ));
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
     public Status addProfile(UserDetails userDetails) {
-        return null;
+        ubublik.network.models.security.User me = getMySecurityUser();
+        Role adminRole = roleDao.getRoleByRoleName(RoleName.ROLE_ADMIN);
+        boolean admin = false;
+        for (Role role:me.getRoles()) {
+            if (Objects.equals(role.getId(), adminRole.getId())){
+                admin = true;
+                break;
+            }
+        }
+        if (!admin) throw new AccessDeniedException("Only admin can add profiles");
+        ubublik.network.models.security.User user = userDao.getUserById(userDetails.getId());
+        if (user==null) throw new EntityNotFoundException("User not found");
+        if (user.getProfile()!=null) return StatusFactory.getStatus(USER_HAS_PROFILE);
+        profileDao.createProfileForUser(user);
+        user = userDao.getUserById(user.getId());
+        Gender gender;
+        if (userDetails.getGender()==null) gender = Gender.NULL; else
+        if (userDetails.getGender().equals("male")) gender = Gender.MALE; else
+        if (userDetails.getGender().equals("female")) gender = Gender.FEMALE; else
+            gender = Gender.NULL;
+        Profile profile = new Profile(
+                user.getProfile().getId(),
+                user,
+                userDetails.getDob(),
+                userDetails.getCity(),
+                userDetails.getCountry(),
+                gender,
+                userDetails.getPhone()
+        );
+        profileDao.editProfile(profile);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
