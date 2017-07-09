@@ -54,6 +54,21 @@ public class UserDao{
         }
     }
 
+    public long saveUser(User user){
+        Session session = HibernateUtil.getSession();
+        try{
+            Transaction transaction = session.beginTransaction();
+            long id = (long)session.save(user);
+            transaction.commit();
+            return id;
+        } catch (Exception e)
+        {
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
 
     public User getUserByNickname(String nickname)throws UsernameNotFoundException, HibernateException{
         Session session = HibernateUtil.getSession();
@@ -73,8 +88,12 @@ public class UserDao{
         }
     }
 
+    public long registerUser(User userData){
+        return registerUser(userData, getUserBasicRoles(), true);
+    }
 
-    public long registerUser(User userData)
+
+    private long registerUser(User userData, List<Role> roles, boolean withProfile)
             throws
             DuplicateUsernameException,
             UserDataFormatException,
@@ -104,15 +123,17 @@ public class UserDao{
                 userData.getName(),
                 userData.getSurname(),
                 userData.getPassword(),
-                getUserBasicRoles(),
+                roles,
                 true,
                 new Date(),
                 null);
         try {
             Transaction transaction = session.beginTransaction();
             long id = (long)session.save(user);//save user, because we need this object to create profile
-            Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
-            session.save(profile);//save profile
+            if (withProfile) {
+                Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
+                session.save(profile);//save profile
+            }
             transaction.commit();
             return id;
         } catch (Exception e) {
@@ -123,13 +144,19 @@ public class UserDao{
     }
 
     public long registerAdmin(User user){
-        return 0;
-        // TODO: 17-Jun-17
+        return registerUser(user, getAdminRoles(), false);
     }
 
     private List<Role> getUserBasicRoles(){
         LinkedList<Role> linkedList = new LinkedList<>();
         linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_USER));
+        return linkedList;
+    }
+
+    private List<Role> getAdminRoles(){
+        LinkedList<Role> linkedList = new LinkedList<>();
+        linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_USER));
+        linkedList.add(roleDao.getRoleByRoleName(RoleName.ROLE_ADMIN));
         return linkedList;
     }
 

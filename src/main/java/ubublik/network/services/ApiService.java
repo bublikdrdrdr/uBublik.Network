@@ -48,5 +48,5 @@ public interface ApiService {
     Status blockUser(long id);
     Status unblockUser(long id);
     User registerAdmin(UserRegistration userRegistration);
-    Status removeProfile(long id);
+    Status removeProfile(long id) throws NetworkLogicException;
 }

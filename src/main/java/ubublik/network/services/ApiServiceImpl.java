@@ -528,15 +528,7 @@ public class ApiServiceImpl implements ApiService{
     @Override
     public Status addProfile(UserDetails userDetails) {
         ubublik.network.models.security.User me = getMySecurityUser();
-        Role adminRole = roleDao.getRoleByRoleName(RoleName.ROLE_ADMIN);
-        boolean admin = false;
-        for (Role role:me.getRoles()) {
-            if (Objects.equals(role.getId(), adminRole.getId())){
-                admin = true;
-                break;
-            }
-        }
-        if (!admin) throw new AccessDeniedException("Only admin can add profiles");
+        if (isAdmin(me)) throw new AccessDeniedException("Only admin can add profiles");
         ubublik.network.models.security.User user = userDao.getUserById(userDetails.getId());
         if (user==null) throw new EntityNotFoundException("User not found");
         if (user.getProfile()!=null) return StatusFactory.getStatus(USER_HAS_PROFILE);
@@ -562,22 +554,61 @@ public class ApiServiceImpl implements ApiService{
 
     @Override
     public Status blockUser(long id) {
-        return null;
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new EntityNotFoundException("User not found");
+        user.setEnabled(false);
+        userDao.saveUser(user);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
     public Status unblockUser(long id) {
-        return null;
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new EntityNotFoundException("User not found");
+        user.setEnabled(true);
+        userDao.saveUser(user);
+        return StatusFactory.getStatus(OK);
     }
 
     @Override
     public User registerAdmin(UserRegistration userRegistration) {
-        return null;
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
+        long id = userDao.registerAdmin(new ubublik.network.models.security.User(
+                userRegistration.getNickname(),
+                userRegistration.getName(),
+                userRegistration.getSurname(),
+                userRegistration.getPassword(),
+                null,
+                true,
+                null,
+                null));
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        return new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
     }
 
     @Override
-    public Status removeProfile(long id) {
-        return null;
+    public Status removeProfile(long id) throws NetworkLogicException {
+        ubublik.network.models.security.User me = getMySecurityUser();
+        if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
+        ubublik.network.models.security.User user = userDao.getUserById(id);
+        if (user==null) throw new EntityNotFoundException("User not found");
+        if (!isAdmin(user)) throw new NetworkLogicException("Profile removing possible only for admins");
+        if (user.getProfile()==null) throw new NetworkLogicException("User does not have a profile");
+        profileDao.removeProfile(user.getProfile());
+        return StatusFactory.getStatus(OK);
+    }
+
+    private boolean isAdmin(ubublik.network.models.security.User user){
+        Role adminRole = roleDao.getRoleByRoleName(RoleName.ROLE_ADMIN);
+        for (Role role:user.getRoles())
+            if (Objects.equals(role.getId(), adminRole.getId())) return true;
+
+        return false;
     }
 
     //// TODO: 30-Jun-17 check exceptions for all methods
