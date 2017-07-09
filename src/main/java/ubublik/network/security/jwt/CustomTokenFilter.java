@@ -30,7 +30,7 @@ public class CustomTokenFilter extends OncePerRequestFilter{
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authToken = request.getHeader(this.tokenHeader);//
+        String authToken = request.getHeader(tokenHeader);//
         String username = null;
         Token token = tokenUtil.parse(authToken);
         if (token!=null) username = token.getUsername();

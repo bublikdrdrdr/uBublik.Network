@@ -9,5 +9,5 @@ public interface TokenUserService extends UserDetailsService{
     @Override
     TokenUser loadUserByUsername(String username) throws UsernameNotFoundException;
 
-    TokenUser findMe();// TODO: 12-Jun-17 maybe add unauthorized exception , but now just return null user 
+    TokenUser findMe();//maybe add unauthorized exception , but now just return null user
 }

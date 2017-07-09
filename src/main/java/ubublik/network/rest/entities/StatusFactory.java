@@ -1,8 +1,5 @@
 package ubublik.network.rest.entities;
 
-/**
- * Created by Bublik on 17-Jun-17.
- */
 public class StatusFactory {
 
     public enum StatusCode {OK, USER_ALREADY_YOUR_FRIEND, REQUEST_ALREADY_SENT, USER_IS_NOT_YOUR_FRIEND, DIALOG_IS_EMPTY, SERVICE_UNAVAILABLE, USER_HAS_PROFILE};

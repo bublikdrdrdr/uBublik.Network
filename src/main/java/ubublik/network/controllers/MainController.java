@@ -1,14 +1,15 @@
 package ubublik.network.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ubublik.network.models.dao.MessageDao;
 import ubublik.network.rest.entities.PagingRequest;
 import ubublik.network.services.ApiService;
-import ubublik.network.services.TokenUserService;
+
+import java.util.TreeMap;
 
 /**
  * Created by Bublik on 10-Jun-17.
@@ -17,18 +18,22 @@ import ubublik.network.services.TokenUserService;
 public class MainController {
 
     @Autowired
-    TokenUserService tokenUserService;
-
-    @Autowired
     ApiService apiService;
 
-    @Autowired
-    MessageDao messageDao;
 
-
-    @RequestMapping("/me")
-    public String me(){
-        return tokenUserService.findMe().getUsername();
+    /**
+     * API service information
+     * @return Version with 200 http code
+     */
+    @RequestMapping("/api")
+    public ResponseEntity<Object> api(){
+        TreeMap<String, Object> map = new TreeMap<>();
+        map.put("version", "0.1A");
+        map.put("service-name", "uBublik.Network");
+        map.put("author", "Vadym Borys");
+        map.put("version-time", 1499609954577L);
+        map.put("server-time", System.currentTimeMillis());
+        return ResponseEntity.ok(map);
     }
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
