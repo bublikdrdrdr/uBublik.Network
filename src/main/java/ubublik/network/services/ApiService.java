@@ -1,9 +1,8 @@
 package ubublik.network.services;
 
 
-import ubublik.network.exceptions.DisabledUserException;
-import ubublik.network.exceptions.EntityNotFoundException;
-import ubublik.network.exceptions.NetworkLogicException;
+import org.hibernate.HibernateException;
+import ubublik.network.exceptions.*;
 import ubublik.network.rest.entities.*;
 
 import java.util.Date;
@@ -13,7 +12,7 @@ import java.util.Date;
  */
 public interface ApiService {
 
-    User registerUser(UserRegistration userRegistration);
+    User registerUser(UserRegistration userRegistration) throws DuplicateUsernameException, UserDataFormatException, HibernateException;
     User getMe();
     User getUser(long id) throws DisabledUserException;
     User getUser(String nickname) throws DisabledUserException;

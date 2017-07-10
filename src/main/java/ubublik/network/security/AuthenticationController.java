@@ -2,6 +2,7 @@ package ubublik.network.security;
 
 
 import io.jsonwebtoken.JwtException;
+import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,8 @@ public class AuthenticationController {
      *
      * @param request AuthenticationRequest with username and password
      * @return JWT and 200 http code (OK), if user is successfully authenticated, or
-     *         400 http code (BAD_REQUEST) - wrong username or password, or
+     *         422 http code (UNPROCESSABLE_ENTITY) - wrong username or password, or
+     *         503 http code (SERVICE_UNAVAILABLE) - problem with connecting to database
      *         500 http code (INTERNAL_SERVER_ERROR) other error
      */
     @RequestMapping(value = "/auth", method = RequestMethod.POST)
@@ -56,7 +58,9 @@ public class AuthenticationController {
             final String token = tokenUtil.create(request.getUsername());
             return ResponseEntity.ok(token);
         } catch (AuthenticationException ae){
-            return ResponseEntity.badRequest().body(ae.getMessage());
+            return ResponseEntity.unprocessableEntity().body(ae.getMessage());
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){
             return ResponseEntity.status(500).body(e.getMessage());
         }
@@ -69,9 +73,10 @@ public class AuthenticationController {
      * @return New token and 200 http code, or
      *         400 http code if request token is invalid, or
      *         422 http code - refresh token error and user has to re-login, or
+     *         503 http code (SERVICE_UNAVAILABLE) - problem with connecting to database
      *         500 http code - other error
      */
-    @RequestMapping(value = "/auth/refresh", method = RequestMethod.GET)
+    @RequestMapping(value = "/auth/refresh", method = RequestMethod.POST)
     public ResponseEntity<String> refreshAuthenticationToken(HttpServletRequest request) {
         try {
             String token = request.getHeader(tokenHeader);
@@ -84,6 +89,8 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body("Invalid token");
         } catch (NullPointerException npe){
             return ResponseEntity.unprocessableEntity().body("Token refresh error, log in with user data");
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }

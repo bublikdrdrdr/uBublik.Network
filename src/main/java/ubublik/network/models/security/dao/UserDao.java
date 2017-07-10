@@ -70,21 +70,19 @@ public class UserDao{
     }
 
 
-    public User getUserByNickname(String nickname)throws UsernameNotFoundException, HibernateException{
+    public User getUserByNickname(String nickname)throws UsernameNotFoundException, HibernateException, NullPointerException{
         Session session = HibernateUtil.getSession();
+        if (nickname==null) throw new NullPointerException("Nickname is null");
         try {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
             Root<User> root = criteriaQuery.from(User.class);
             criteriaQuery.where(criteriaBuilder.equal(root.get("nickname"), nickname));
             User user = session.createQuery(criteriaQuery).getSingleResult();
+            session.close();
             return user;
         } catch (NoResultException nre){
             throw new UsernameNotFoundException("Username not found");
-        } catch (Exception e){
-            throw e;
-        } finally {
-            session.close();
         }
     }
 
@@ -97,13 +95,15 @@ public class UserDao{
             throws
             DuplicateUsernameException,
             UserDataFormatException,
-            HibernateException{
+            HibernateException {
         User existingUser = null;
         try {
             existingUser = getUserByNickname(userData.getNickname());
-        } catch (UsernameNotFoundException unfe){
+        } catch (UsernameNotFoundException unfe) {
+        } catch (NullPointerException npe){
+            throw new UserDataFormatException("Username is null");
         }
-        if (existingUser!=null) throw new DuplicateUsernameException("Username already taken");
+        if (existingUser != null) throw new DuplicateUsernameException("Username already taken");
 
         if (!userDataValidator.validate(UserDataValidator.DataType.NICKNAME, userData.getNickname()))
             throw new UserDataFormatException("Bad username format");
@@ -127,20 +127,15 @@ public class UserDao{
                 true,
                 new Date(),
                 null);
-        try {
-            Transaction transaction = session.beginTransaction();
-            long id = (long)session.save(user);//save user, because we need this object to create profile
-            if (withProfile) {
-                Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
-                session.save(profile);//save profile
-            }
-            transaction.commit();
-            return id;
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            session.close();
+        Transaction transaction = session.beginTransaction();
+        long id = (long) session.save(user);//save user, because we need this object to create profile
+        if (withProfile) {
+            Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
+            session.save(profile);//save profile
         }
+        transaction.commit();
+        session.close();
+        return id;
     }
 
     public long registerAdmin(User user){
