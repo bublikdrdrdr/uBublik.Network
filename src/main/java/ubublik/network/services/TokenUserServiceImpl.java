@@ -25,15 +25,14 @@ public class TokenUserServiceImpl implements TokenUserService {
 
     @Override
     public TokenUser findMe() throws
-    UnauthorizedException, InvalidPrincipalException{
+    UnauthorizedException, InvalidPrincipalException, IllegalArgumentException{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication==null) throw new UnauthorizedException("Not authorized");
-        if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new UnauthorizedException("Authentication object is not instance of UsernamePasswordAuthenticationToken");
+        if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new IllegalArgumentException("Authentication object is not instance of UsernamePasswordAuthenticationToken");
         UsernamePasswordAuthenticationToken upat = (UsernamePasswordAuthenticationToken)authentication;
         Object tU = upat.getPrincipal();
         if (tU==null) throw new InvalidPrincipalException("TokenUser principal is null");
         if (!(tU instanceof TokenUser)) throw new InvalidPrincipalException("Token's principal is not an instance of TokenUser");
-        TokenUser tokenUser = (TokenUser)tU;
-        return tokenUser;
+        return  (TokenUser)tU;
     }
 }

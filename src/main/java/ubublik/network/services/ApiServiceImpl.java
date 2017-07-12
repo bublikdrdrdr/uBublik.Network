@@ -124,7 +124,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public User getMe() throws InvalidPrincipalException, UnauthorizedException {
+    public User getMe() throws InvalidPrincipalException, UnauthorizedException, IllegalArgumentException {
         TokenUser tokenUser = tokenUserService.findMe();
         return new User(
                 tokenUser.getId(),
