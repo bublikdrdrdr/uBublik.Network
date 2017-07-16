@@ -4,18 +4,15 @@ import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ubublik.network.exceptions.*;
 import ubublik.network.rest.entities.User;
+import ubublik.network.rest.entities.UserDetails;
 import ubublik.network.rest.entities.UserRegistration;
 import ubublik.network.services.ApiService;
 
-import javax.websocket.server.PathParam;
-
-@RestController(value = "/users")
+@RestController
+@RequestMapping(value = "users")
 public class UserController {
 
     @Autowired
@@ -31,7 +28,7 @@ public class UserController {
      *         503 http code (SERVICE_UNAVAILABLE) if server has problems with connecting to database, or
      *         500 http code (INTERNAL_SERVER_ERROR) - other errors
      */
-    @RequestMapping(value = "/new", method = RequestMethod.POST)
+    @RequestMapping(value = "/new", method = RequestMethod.POST)// TODO: 14-Jul-17 remove "/new"
     public ResponseEntity<Object> registerUser(@RequestBody UserRegistration userRegistration){
         try {
             User user = apiService.registerUser(userRegistration);
@@ -62,16 +59,15 @@ public class UserController {
         }
     }
 
-    // TODO: 11-Jul-17 test it
-    @RequestMapping(value = "/id{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> getUserById(@PathParam("id") long id){
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getUserById(@PathVariable Integer id){
         try{
             User user = apiService.getUser(id);
             return ResponseEntity.ok(user);
         } catch (DisabledUserException due) {
             return ResponseEntity.unprocessableEntity().body(due.getMessage());
         } catch (UserNotFoundException unfe){
-            return ResponseEntity.badRequest().body(unfe);
+            return ResponseEntity.notFound().build();
         } catch (HibernateException he){
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){
@@ -79,9 +75,39 @@ public class UserController {
         }
     }
 
-    @RequestMapping(value = "/{nickname}", method = RequestMethod.GET)
-    public ResponseEntity getUserByNickname(@PathParam("nickname") String nickname){
-        return null;
+    @RequestMapping(value = "/nick/{nickname}", method = RequestMethod.GET)
+    public ResponseEntity getUserByNickname(@PathVariable("nickname") String nickname){
+        try{
+            User user = apiService.getUser(nickname);
+            return ResponseEntity.ok(user);
+        } catch (DisabledUserException due) {
+            return ResponseEntity.unprocessableEntity().body(due.getMessage());
+        } catch (UserNotFoundException unfe){
+            return ResponseEntity.notFound().build();
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/{id}/details", method = RequestMethod.GET)
+    public ResponseEntity getUserDetails(@PathVariable Long id){
+        try{
+            UserDetails userDetails = apiService.getUserDetails(id);
+            return ResponseEntity.ok(userDetails);
+        } catch (UserNotFoundException unfe){
+            return ResponseEntity.notFound().build();
+        } catch (DisabledUserException due) {
+            return ResponseEntity.unprocessableEntity().body(due.getMessage());
+        } catch (EntityNotFoundException enfe){
+            return ResponseEntity.unprocessableEntity().body(enfe.getMessage());
+            // TODO: 14-Jul-17 maybe change to 404, but it's a difference between no user and user without profile (admin)
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
 }

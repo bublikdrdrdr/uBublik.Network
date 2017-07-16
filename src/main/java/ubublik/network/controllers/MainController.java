@@ -20,7 +20,6 @@ public class MainController {
     @Autowired
     ApiService apiService;
 
-
     /**
      * API service information
      * @return Version with 200 http code

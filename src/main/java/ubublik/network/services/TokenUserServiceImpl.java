@@ -28,7 +28,7 @@ public class TokenUserServiceImpl implements TokenUserService {
     UnauthorizedException, InvalidPrincipalException, IllegalArgumentException{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication==null) throw new UnauthorizedException("Not authorized");
-        if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new IllegalArgumentException("Authentication object is not instance of UsernamePasswordAuthenticationToken");
+        if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new UnauthorizedException("Not authorized");
         UsernamePasswordAuthenticationToken upat = (UsernamePasswordAuthenticationToken)authentication;
         Object tU = upat.getPrincipal();
         if (tU==null) throw new InvalidPrincipalException("TokenUser principal is null");

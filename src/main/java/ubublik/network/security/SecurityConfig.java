@@ -32,15 +32,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // we use jwt so that we can disable csrf protection
         http.csrf().disable();
         http.authorizeRequests().antMatchers("/*").permitAll();
         http
                 .exceptionHandling().and()
                 .anonymous().and()
                 .servletApi().and()
-                .headers().cacheControl()
-        ;
+                .headers().cacheControl();
     }
 
     @Override
@@ -66,11 +64,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new CustomTokenFilter();
     }
 
-    //TEMP
-    private AuthenticationEntryPoint getUnauthorizedEntryPoint(){
-        return (request, response, authException) -> {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-        };
+    @Bean
+    public AuthenticationEntryPoint getUnauthorizedEntryPoint(){
+        return (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
     }
 
 
