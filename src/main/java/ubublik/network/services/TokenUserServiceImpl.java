@@ -25,7 +25,7 @@ public class TokenUserServiceImpl implements TokenUserService {
 
     @Override
     public TokenUser findMe() throws
-    UnauthorizedException, InvalidPrincipalException, IllegalArgumentException{
+    UnauthorizedException, InvalidPrincipalException{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication==null) throw new UnauthorizedException("Not authorized");
         if (!(authentication instanceof UsernamePasswordAuthenticationToken)) throw new UnauthorizedException("Not authorized");

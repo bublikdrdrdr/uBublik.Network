@@ -13,7 +13,7 @@ import java.util.Date;
 public interface ApiService {
 
     User registerUser(UserRegistration userRegistration) throws DuplicateUsernameException, UserDataFormatException, HibernateException;
-    User getMe();
+    User getMe() throws DisabledUserException;
     User getUser(long id) throws DisabledUserException;
     User getUser(String nickname) throws DisabledUserException;
     UserDetails getUserDetails(long id) throws EntityNotFoundException, DisabledUserException;
