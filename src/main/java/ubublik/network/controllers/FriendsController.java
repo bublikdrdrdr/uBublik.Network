@@ -5,12 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ubublik.network.exceptions.*;
 import ubublik.network.rest.entities.PagingRequest;
+import ubublik.network.rest.entities.Status;
 import ubublik.network.rest.entities.UserList;
 import ubublik.network.services.ApiService;
 
@@ -25,7 +23,8 @@ public class FriendsController {
 
     /**
      * Get authorized user
-     * @param pagingRequest with offset and size of list (optionally), if null - default values will be used
+     * @param offset offset of list (optionally), if null - default values will be used
+     * @param size size of list (optionally), if null - default values will be used
      * @return UserList with count and list of users and 206 http code (PARTIAL_CONTENT), or
      *         403 http code (FORBIDDEN) if user is disabled, or
      *         400 http code (BAD_REQUEST) with description (InvalidPrincipalException), or
@@ -35,9 +34,10 @@ public class FriendsController {
      */
     @PreAuthorize(HAS_USER_ROLE)
     @RequestMapping(value = "/friends", method = RequestMethod.GET)
-    public ResponseEntity getMyFriends(@RequestParam(name = "pagination", required = false) PagingRequest pagingRequest){
+    public ResponseEntity getMyFriends(@RequestParam(name = "offset", required = false) Integer offset,
+                                       @RequestParam(name = "size", required = false) Integer size){
         try{
-            UserList userList = apiService.getMyFriends(pagingRequest);
+            UserList userList = apiService.getMyFriends(new PagingRequest(offset, size));
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
         } catch (UnauthorizedException ue){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
@@ -55,10 +55,12 @@ public class FriendsController {
     }
 
     @PreAuthorize(HAS_USER_ROLE)
-    @RequestMapping(value = "/users/{id}/friends")
-    public ResponseEntity getUserFriends(@RequestParam(name = "pagination", required = false) PagingRequest pagingRequest){
+    @RequestMapping(value = "/users/{id}/friends", method = RequestMethod.GET)
+    public ResponseEntity getUserFriends(@PathVariable(name = "id") Long id,
+                                         @RequestParam(name = "offset", required = false) Integer offset,
+                                         @RequestParam(name = "size", required = false) Integer size){
         try{
-            UserList userList = apiService.getMyFriends(pagingRequest);
+            UserList userList = apiService.getMyFriends(new PagingRequest(id, offset, size));
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
         } catch (UnauthorizedException ue){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
@@ -73,6 +75,90 @@ public class FriendsController {
         } catch (EntityNotFoundException enfe){
             return ResponseEntity.notFound().build();
         } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_USER_ROLE)
+    @RequestMapping(value = "/friends/requests/incoming", method = RequestMethod.GET)
+    public ResponseEntity getIncomingRequests(@RequestParam(name = "offset", required = false) Integer offset,
+                                              @RequestParam(name = "size", required = false) Integer size){
+        try{
+            UserList userList = apiService.getIncomingFriendsRequests(new PagingRequest(offset, size));
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
+        } catch (AuthorizedEntityNotFoundException aenfe){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(aenfe.getMessage());
+        } catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        } catch (DisabledUserException due) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_USER_ROLE)
+    @RequestMapping(value = "/friends/requests/outgoing", method = RequestMethod.GET)
+    public ResponseEntity getOutgoingRequests(@RequestParam(name = "offset", required = false) Integer offset,
+                                              @RequestParam(name = "size", required = false) Integer size){
+        try{
+            UserList userList = apiService.getOutgoingFriendsRequests(new PagingRequest(offset, size));
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
+        } catch (AuthorizedEntityNotFoundException aenfe){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(aenfe.getMessage());
+        } catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        } catch (DisabledUserException due) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_USER_ROLE)
+    @RequestMapping(value = "/friends/{id}", method = RequestMethod.POST)
+    public ResponseEntity addFriend(@PathVariable(name = "id") Long id){
+        try{
+            Status status = apiService.addFriend(id);
+            return ResponseEntity.ok(status);
+        } catch (AlreadyFriendsException afe){
+            return ResponseEntity.unprocessableEntity().body(afe.getStatus());
+        } catch (RequestSentException rse){
+            return ResponseEntity.unprocessableEntity().body(rse.getStatus());
+        } catch (UserNotFoundException unfe){
+            return ResponseEntity.notFound().build();
+        } catch (DisabledUserException due) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
+        } catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        }catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_USER_ROLE)
+    @RequestMapping(value = "/friends/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity removeFriend(@PathVariable(name = "id") Long id){
+        try{
+            Status status = apiService.removeFriend(id);
+            return ResponseEntity.ok(status);
+        } catch (NotFriendException nfe){
+            return ResponseEntity.unprocessableEntity().body(nfe.getStatus());
+        } catch (UserNotFoundException unfe){
+            return ResponseEntity.notFound().build();
+        } catch (DisabledUserException due) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
+        } catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        }catch (HibernateException he){
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

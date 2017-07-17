@@ -23,11 +23,11 @@ public interface ApiService {
     UserList search(Search search) throws EntityNotFoundException;
     Image getImage(long id) throws EntityNotFoundException;
     UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException;
-    UserList getFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException;
-    UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException;
-    Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException;
-    Status removeFriend(long id) throws EntityNotFoundException;//same as cancel request
-    DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException;
+    UserList getIncomingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException, DisabledUserException;
+    UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException, DisabledUserException;
+    Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException, DisabledUserException;
+    Status removeFriend(long id) throws EntityNotFoundException, NotFriendException, DisabledUserException;//same as cancel request
+    DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException, DisabledUserException;
     Status removeDialog(long userId) throws EntityNotFoundException;
     Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException;
     MessageList getMessages(PagingRequest pagingRequest) throws EntityNotFoundException;

@@ -277,6 +277,7 @@ public class ApiServiceImpl implements ApiService{
 
     private ImageConverter imageConverter = new ImageConverter();
 
+    // TODO: 17-Jul-17 add upload image method
     @Override
     public Image getImage(long id) throws EntityNotFoundException, HibernateException {
         ubublik.network.models.Image im = imageDao.getImageById(id);
@@ -285,10 +286,10 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException, HibernateException {
+    public UserImagesList getUserImages(PagingRequest pagingRequest) throws UserNotFoundException, HibernateException {
         pagingRequest = fixPagingRequest(pagingRequest, defaultImageListOffset, defaultImageListSize);
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
-        if (user==null) throw new EntityNotFoundException("Can't find user");
+        if (user==null) throw new UserNotFoundException("Can't find user");
         UserImagesList userImagesList = new UserImagesList(user.getId());
         List<ProfilePicture> list = imageDao.getProfilePictures(user, pagingRequest.getOffset(), pagingRequest.getSize());
         for (ProfilePicture picture : list) {
@@ -298,29 +299,35 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException, HibernateException, AuthorizedEntityNotFoundException {
+    public UserList getIncomingFriendsRequests(PagingRequest pagingRequest) throws HibernateException,
+            AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, DisabledUserException {
         ubublik.network.models.security.User me = getMySecurityUser();
+        if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         List<ubublik.network.models.security.User> users = friendsDao.getIncomingFriendRequests(me, pagingRequest, false);
         return new UserList(friendsDao.getIncomingFriendRequestsCount(me, false), toRestUsers(users));
     }
 
     @Override
-    public UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public UserList getOutgoingFriendsRequests(PagingRequest pagingRequest) throws HibernateException,
+            AuthorizedEntityNotFoundException, DisabledUserException, UnauthorizedException, InvalidPrincipalException {
         ubublik.network.models.security.User me = getMySecurityUser();
+        if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         List<ubublik.network.models.security.User> users = friendsDao.getOutgoingFriendRequests(me, pagingRequest, false);
         return new UserList(friendsDao.getOutgoingFriendRequestsCount(me, false), toRestUsers(users));
     }
 
     @Override
-    public Status addFriend(long id) throws EntityNotFoundException, NetworkLogicException, AuthorizedEntityNotFoundException {
+    public Status addFriend(long id) throws UserNotFoundException, NetworkLogicException,
+            AuthorizedEntityNotFoundException, DisabledUserException, UnauthorizedException {
         ubublik.network.models.security.User me = getMySecurityUser();
+        if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         ubublik.network.models.security.User user = userDao.getUserById(id);
-        if (user==null) throw new EntityNotFoundException("Can't find user");
-
+        if (user==null) throw new UserNotFoundException("Can't find user");
+        if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         if (friendsDao.haveFriendRelation(me, user))
-            return StatusFactory.getStatus(USER_ALREADY_YOUR_FRIEND);  //throw new NetworkLogicException("User is already in friends list");
+            throw new AlreadyFriendsException(StatusFactory.getStatus(USER_ALREADY_YOUR_FRIEND));
         if (friendsDao.getFriendRelationByUsers(me, user)!=null)
-            return StatusFactory.getStatus(REQUEST_ALREADY_SENT);
+            throw new RequestSentException(StatusFactory.getStatus(REQUEST_ALREADY_SENT));
 
         FriendRelation incoming = friendsDao.getFriendRelationByUsers(user, me);
         if (incoming!=null){
@@ -338,13 +345,12 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeFriend(long id) throws EntityNotFoundException, HibernateException, AuthorizedEntityNotFoundException {
+    public Status removeFriend(long id) throws EntityNotFoundException, HibernateException, AuthorizedEntityNotFoundException, UnauthorizedException, NotFriendException, DisabledUserException {
         ubublik.network.models.security.User me = getMySecurityUser();
+        if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         ubublik.network.models.security.User user = userDao.getUserById(id);
         if (user==null) throw new EntityNotFoundException("Can't find user");
-        /*TODO: 23-Jun-17 separate getMe entity not found exception and getUserById exception
-        because if service user sent wrong id, it's ok, but if user is logged, but DB entity not found... it's a different situation
-         */
+        if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         FriendRelation outgoing = friendsDao.getFriendRelationByUsers(me, user);
         FriendRelation incoming = friendsDao.getFriendRelationByUsers(user, me);
         if (incoming!=null){
@@ -357,15 +363,16 @@ public class ApiServiceImpl implements ApiService{
             if (outgoing!=null){
                 friendsDao.removeFriendRelation(outgoing);
             } else {
-                return StatusFactory.getStatus(USER_IS_NOT_YOUR_FRIEND);
+                throw new NotFriendException(StatusFactory.getStatus(USER_IS_NOT_YOUR_FRIEND));
             }
         }
         return StatusFactory.getStatus(OK);
     }
 
     @Override
-    public DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException, DisabledUserException {
         ubublik.network.models.security.User user = getMySecurityUser();
+        if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         pagingRequest = fixPagingRequest(pagingRequest, defaultDialogListOffset, defaultDialogListSize);
         DialogList dialogList = new DialogList(messageDao.getDialogsCount(user));
         List<ubublik.network.models.Message> rawMessages = messageDao.getDialogs(user, pagingRequest.getOffset(), pagingRequest.getSize());
