@@ -18,8 +18,8 @@ public interface ApiService {
     User getUser(String nickname) throws DisabledUserException;
     UserDetails getUserDetails(long id) throws EntityNotFoundException, DisabledUserException;
     Status editUserDetails(UserDetails userDetails) throws DisabledUserException;
-    UserList getMyFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
-    UserList getUserFriends(PagingRequest pagingRequest) throws EntityNotFoundException;
+    UserList getMyFriends(PagingRequest pagingRequest) throws EntityNotFoundException, DisabledUserException;
+    UserList getUserFriends(PagingRequest pagingRequest) throws EntityNotFoundException, DisabledUserException;
     UserList search(Search search) throws EntityNotFoundException;
     Image getImage(long id) throws EntityNotFoundException;
     UserImagesList getUserImages(PagingRequest pagingRequest) throws EntityNotFoundException;

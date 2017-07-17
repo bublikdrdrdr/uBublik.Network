@@ -7,14 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ubublik.network.exceptions.*;
-import ubublik.network.rest.entities.Status;
-import ubublik.network.rest.entities.User;
-import ubublik.network.rest.entities.UserDetails;
-import ubublik.network.rest.entities.UserRegistration;
+import ubublik.network.rest.entities.*;
 import ubublik.network.services.ApiService;
 
+import static ubublik.network.security.SecurityConfig.HAS_USER_ROLE;
+
 @RestController
-@RequestMapping(value = "users")
+@RequestMapping(value = "/api/users")
 public class UserController {
 
     @Autowired
@@ -55,7 +54,7 @@ public class UserController {
      *         503 http code (SERVICE_UNAVAILABLE) if server has problems with connecting to database, or
      *         500 http code (INTERNAL_SERVER_ERROR) - other errors
      */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize(HAS_USER_ROLE)
     @RequestMapping(value = "/me", method = RequestMethod.GET)
     public ResponseEntity<Object> getMe(){
         try{
@@ -165,6 +164,7 @@ public class UserController {
      *         503 http code (SERVICE_UNAVAILABLE) if server has problems with connecting to database, or
      *         500 http code (INTERNAL_SERVER_ERROR) - other errors
      */
+    @PreAuthorize(HAS_USER_ROLE)
     @RequestMapping(value = "/me/details", method = RequestMethod.PUT)
     public ResponseEntity saveProfile(@RequestParam(name = "details") UserDetails userDetails){
         try {
@@ -181,6 +181,28 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
         } catch (UnauthorizedException ue){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    public ResponseEntity searchUsers(@RequestParam(name = "params")Search search){
+        try {
+            UserList userList = apiService.search(search);
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
+        } catch (AuthorizedEntityNotFoundException aenfe) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(aenfe.getMessage());
+        } catch (AccessDeniedException ade) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ade.getMessage());
+        } catch (UserNotFoundException unfe) {
+            return ResponseEntity.notFound().build();
+        } catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
+        } catch (IllegalArgumentException iae){
+            return ResponseEntity.badRequest().body(iae.getMessage());
         } catch (HibernateException he){
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){

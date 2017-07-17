@@ -212,9 +212,9 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, EntityNotFoundException, AuthorizedEntityNotFoundException{
+    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, DisabledUserException {
         ubublik.network.models.security.User user = getMySecurityUser();
-        if (user==null) throw new EntityNotFoundException("Can't find logged user");
+        if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
         List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
         UserList userList = new UserList(friendsDao.getUserFriendsCount(user));
@@ -223,13 +223,16 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, EntityNotFoundException{
+    public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, EntityNotFoundException, AccessDeniedException, DisabledUserException{
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
         if (user==null) throw new EntityNotFoundException("Can't find user");
-        ubublik.network.models.security.User me = getMySecurityUser();
-        if (!SocialNetworkProperties.friendsArePublic)
+        if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
+        if (!SocialNetworkProperties.friendsArePublic) {
+            ubublik.network.models.security.User me = getMySecurityUser();
+            if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
             if (!friendsDao.haveFriendRelation(me, user))
-            throw new AccessDeniedException("Access denied, the user is not your friend");
+                throw new AccessDeniedException("Access denied, the user is not your friend");
+        }
 
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
         List<ubublik.network.models.security.User> friends = friendsDao.getUserFriends(user, pagingRequest.getOffset(), pagingRequest.getSize());
@@ -240,9 +243,8 @@ public class ApiServiceImpl implements ApiService{
 
     @Override
     public UserList search(Search search)
-            throws IllegalArgumentException, HibernateException, UnauthorizedException, EntityNotFoundException,
+            throws IllegalArgumentException, HibernateException, UnauthorizedException, UserNotFoundException,
             AccessDeniedException, AuthorizedEntityNotFoundException{
-
         switch (search.getSourceEnum()){
             case ALL:
                 fixSearchLimit(search, defaultSearchListOffset, defaultSearchListSize);
@@ -254,7 +256,7 @@ public class ApiServiceImpl implements ApiService{
                 ubublik.network.models.security.User listOwner;
                 if (search.getSource_id()!=null) {
                     listOwner = userDao.getUserById(search.getSource_id());
-                    if (listOwner==null) throw new EntityNotFoundException("Can't find logged user");
+                    if (listOwner==null) throw new UserNotFoundException("Source user not found");
                     ubublik.network.models.security.User me = getMySecurityUser();
                     if (!me.getId().equals(search.getSource_id())){
                         if (!SocialNetworkProperties.friendsArePublic){

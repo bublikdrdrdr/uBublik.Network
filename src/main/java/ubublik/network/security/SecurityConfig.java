@@ -25,6 +25,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserDetailsService userDetailsService;//TokenUserServiceImpl
 
+    //for PreAuthorize annotations
+    public static final String HAS_USER_ROLE = "hasRole('USER')";
+    public static final String HAS_ADMIN_ROLE = "hasRole('ADMIN')";
+
 
     public SecurityConfig() {
         super(true);
