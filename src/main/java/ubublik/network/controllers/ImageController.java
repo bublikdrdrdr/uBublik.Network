@@ -40,7 +40,7 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        }//i know, anyone have access to every image, just by using id, I'll fix it later
     }
 
     @RequestMapping(value = "/users/{id}/images")

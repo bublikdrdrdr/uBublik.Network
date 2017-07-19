@@ -86,7 +86,7 @@ public class UserDao{
         }
     }
 
-    public long registerUser(User userData){
+    public long registerUser(User userData) throws UserDataFormatException, DuplicateUsernameException {
         return registerUser(userData, getUserBasicRoles(), true);
     }
 
@@ -138,7 +138,7 @@ public class UserDao{
         return id;
     }
 
-    public long registerAdmin(User user){
+    public long registerAdmin(User user) throws UserDataFormatException, DuplicateUsernameException {
         return registerUser(user, getAdminRoles(), false);
     }
 

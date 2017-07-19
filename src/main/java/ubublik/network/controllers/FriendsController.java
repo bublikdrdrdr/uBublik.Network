@@ -66,8 +66,6 @@ public class FriendsController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
         } catch (DisabledUserException due) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
-        } catch (AccessDeniedException ade){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ade.getMessage());
         } catch (InvalidPrincipalException ipe) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ipe.getMessage());
         } catch (AuthorizedEntityNotFoundException aenfe) {
@@ -152,7 +150,7 @@ public class FriendsController {
             return ResponseEntity.ok(status);
         } catch (NotFriendException nfe){
             return ResponseEntity.unprocessableEntity().body(nfe.getStatus());
-        } catch (UserNotFoundException unfe){
+        } catch (UserNotFoundException e){
             return ResponseEntity.notFound().build();
         } catch (DisabledUserException due) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());

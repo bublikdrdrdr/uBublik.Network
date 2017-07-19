@@ -11,12 +11,12 @@ import ubublik.network.models.Profile;
 import ubublik.network.models.ProfilePicture;
 import ubublik.network.models.converters.ImageConverter;
 import ubublik.network.models.dao.*;
-import ubublik.network.models.security.Role;
-import ubublik.network.models.security.RoleName;
+import ubublik.network.models.security.*;
 import ubublik.network.models.security.dao.RoleDao;
 import ubublik.network.models.security.dao.UserDao;
 import ubublik.network.properties.SocialNetworkProperties;
 import ubublik.network.rest.entities.*;
+import ubublik.network.rest.entities.User;
 
 import java.util.*;
 
@@ -143,8 +143,13 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public User getUser(String nickname) throws UsernameNotFoundException, HibernateException, DisabledUserException {
-        ubublik.network.models.security.User user = userDao.getUserByNickname(nickname);
+    public User getUser(String nickname) throws UsernameNotFoundException, HibernateException, DisabledUserException, UserNotFoundException {
+        ubublik.network.models.security.User user;
+        try {
+            user = userDao.getUserByNickname(nickname);
+        } catch (UsernameNotFoundException e){
+            throw new UserNotFoundException(e.getMessage());
+        }
         if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
         return new User(user.getId(), user.getNickname(), user.getName(), user.getSurname());
     }
@@ -185,7 +190,8 @@ public class ApiServiceImpl implements ApiService{
             UserNotFoundException,
             DisabledUserException,
             UnauthorizedException,
-            AuthorizedEntityNotFoundException{
+            AuthorizedEntityNotFoundException,
+            InvalidPrincipalException {
         ubublik.network.models.security.User user = getMySecurityUser();
         if (user==null) throw new UserNotFoundException("User does not exist");
         if (!user.getEnabled()) throw new DisabledUserException("User has been blocked");
@@ -212,7 +218,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, DisabledUserException {
+    public UserList getMyFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, DisabledUserException, InvalidPrincipalException {
         ubublik.network.models.security.User user = getMySecurityUser();
         if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         pagingRequest = fixPagingRequest(pagingRequest, SocialNetworkProperties.defaultFriendListOffset, SocialNetworkProperties.defaultFriendListSize);
@@ -223,7 +229,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, EntityNotFoundException, AccessDeniedException, DisabledUserException{
+    public UserList getUserFriends(PagingRequest pagingRequest) throws HibernateException, UnauthorizedException, AuthorizedEntityNotFoundException, EntityNotFoundException, AccessDeniedException, DisabledUserException, InvalidPrincipalException {
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
         if (user==null) throw new EntityNotFoundException("Can't find user");
         if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
@@ -244,7 +250,7 @@ public class ApiServiceImpl implements ApiService{
     @Override
     public UserList search(Search search)
             throws IllegalArgumentException, HibernateException, UnauthorizedException, UserNotFoundException,
-            AccessDeniedException, AuthorizedEntityNotFoundException{
+            AccessDeniedException, AuthorizedEntityNotFoundException, InvalidPrincipalException {
         switch (search.getSourceEnum()){
             case ALL:
                 fixSearchLimit(search, defaultSearchListOffset, defaultSearchListSize);
@@ -318,7 +324,7 @@ public class ApiServiceImpl implements ApiService{
 
     @Override
     public Status addFriend(long id) throws UserNotFoundException, NetworkLogicException,
-            AuthorizedEntityNotFoundException, DisabledUserException, UnauthorizedException {
+            AuthorizedEntityNotFoundException, DisabledUserException, UnauthorizedException, InvalidPrincipalException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         ubublik.network.models.security.User user = userDao.getUserById(id);
@@ -345,11 +351,12 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeFriend(long id) throws EntityNotFoundException, HibernateException, AuthorizedEntityNotFoundException, UnauthorizedException, NotFriendException, DisabledUserException {
+    public Status removeFriend(long id) throws UserNotFoundException, HibernateException,
+            AuthorizedEntityNotFoundException, UnauthorizedException, NotFriendException, DisabledUserException, InvalidPrincipalException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         ubublik.network.models.security.User user = userDao.getUserById(id);
-        if (user==null) throw new EntityNotFoundException("Can't find user");
+        if (user==null) throw new UserNotFoundException("Can't find user");
         if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         FriendRelation outgoing = friendsDao.getFriendRelationByUsers(me, user);
         FriendRelation incoming = friendsDao.getFriendRelationByUsers(user, me);
@@ -370,7 +377,8 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public DialogList getDialogs(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException, DisabledUserException {
+    public DialogList getDialogs(PagingRequest pagingRequest) throws UnauthorizedException,
+            AuthorizedEntityNotFoundException, DisabledUserException, HibernateException, InvalidPrincipalException {
         ubublik.network.models.security.User user = getMySecurityUser();
         if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
         pagingRequest = fixPagingRequest(pagingRequest, defaultDialogListOffset, defaultDialogListSize);
@@ -393,21 +401,21 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeDialog(long userId) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Status removeDialog(long userId) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException {
         if (messageDao.removeDialog(getMySecurityUser(), userDao.getUserById(userId))>0)
             return StatusFactory.getStatus(OK); else
             return StatusFactory.getStatus(DIALOG_IS_EMPTY);
     }
 
     @Override
-    public Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException, UnauthorizedException, AuthorizedEntityNotFoundException {
+    public Boolean checkNewMessages(Date lastUpdate) throws EntityNotFoundException, UnauthorizedException, AuthorizedEntityNotFoundException, InvalidPrincipalException {
         ubublik.network.models.Message message = messageDao.getLastMessage(getMySecurityUser());
         if (lastUpdate==null) throw new IllegalArgumentException("Date can't be null");
         return lastUpdate.before(message.getMessageDate());
     }
 
     @Override
-    public MessageList getMessages(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public MessageList getMessages(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException {
         ubublik.network.models.security.User me = getMySecurityUser();
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
         pagingRequest = fixPagingRequest(pagingRequest, defaultMessageListOffset, defaultMessageListSize);
@@ -426,16 +434,16 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeMessage(long id) throws EntityNotFoundException {
+    public Status removeMessage(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         return setMessageStatus(id, true);
     }
 
     @Override
-    public Status restoreMessage(long id) throws EntityNotFoundException {
+    public Status restoreMessage(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         return setMessageStatus(id, false);
     }
 
-    private Status setMessageStatus(long id, boolean deleted) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    private Status setMessageStatus(long id, boolean deleted) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.security.User user = getMySecurityUser();
         ubublik.network.models.Message message = messageDao.getMessageById(id);
         if (message==null) throw new EntityNotFoundException("Message not found");
@@ -449,7 +457,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Message sendMessage(Message message) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Message sendMessage(Message message) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         if (message.getText().length()>messageMaxLength) throw new IllegalArgumentException("Message is too long");
         ubublik.network.models.security.User me = getMySecurityUser();
         ubublik.network.models.security.User receiver = userDao.getUserById(message.getDialog_user_id());
@@ -462,7 +470,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public PostList getUserPosts(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public PostList getUserPosts(PagingRequest pagingRequest) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.security.User user = userDao.getUserById(pagingRequest.getId());
         if (user==null) throw new EntityNotFoundException("User not found");
         if (!postsArePublic){
@@ -479,7 +487,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Post getPost(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Post getPost(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.Post dbPost = postDao.getPostById(id);
         if (dbPost==null) throw new EntityNotFoundException("Post not found");
         if (!postsArePublic){
@@ -496,7 +504,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Post addPost(Post post) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Post addPost(Post post) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.security.User me = getMySecurityUser();
         List<ubublik.network.models.Image> images = new ArrayList<>();
         for (Long imageId:post.getImages()) {
@@ -510,7 +518,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removePost(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Status removePost(long id) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.Post dbPost = postDao.getPostById(id);
         if (dbPost==null) throw new EntityNotFoundException("Post not found");
         ubublik.network.models.security.User me = getMySecurityUser();
@@ -521,7 +529,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status report(Report report) throws EntityNotFoundException, AuthorizedEntityNotFoundException {
+    public Status report(Report report) throws EntityNotFoundException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException {
         ubublik.network.models.security.User admin = userDao.getReportAdmin();
         if (admin==null) return StatusFactory.getStatus(SERVICE_UNAVAILABLE);
         ubublik.network.models.security.User me = getMySecurityUser();
@@ -536,7 +544,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status addProfile(UserDetails userDetails) throws AuthorizedEntityNotFoundException {
+    public Status addProfile(UserDetails userDetails) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, EntityNotFoundException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (isAdmin(me)) throw new AccessDeniedException("Only admin can add profiles");
         ubublik.network.models.security.User user = userDao.getUserById(userDetails.getId());
@@ -563,7 +571,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status blockUser(long id) throws AuthorizedEntityNotFoundException {
+    public Status blockUser(long id) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, EntityNotFoundException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
         ubublik.network.models.security.User user = userDao.getUserById(id);
@@ -574,7 +582,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status unblockUser(long id) throws AuthorizedEntityNotFoundException {
+    public Status unblockUser(long id) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, EntityNotFoundException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
         ubublik.network.models.security.User user = userDao.getUserById(id);
@@ -585,7 +593,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public User registerAdmin(UserRegistration userRegistration) throws AuthorizedEntityNotFoundException {
+    public User registerAdmin(UserRegistration userRegistration) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
         long id = userDao.registerAdmin(new ubublik.network.models.security.User(
@@ -602,7 +610,7 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status removeProfile(long id) throws NetworkLogicException, AuthorizedEntityNotFoundException {
+    public Status removeProfile(long id) throws NetworkLogicException, AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, EntityNotFoundException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!isAdmin(me)) throw new AccessDeniedException("Only admin can do this");
         ubublik.network.models.security.User user = userDao.getUserById(id);
@@ -617,10 +625,8 @@ public class ApiServiceImpl implements ApiService{
         Role adminRole = roleDao.getRoleByRoleName(RoleName.ROLE_ADMIN);
         for (Role role:user.getRoles())
             if (Objects.equals(role.getId(), adminRole.getId())) return true;
-
         return false;
     }
 
-    //// TODO: 30-Jun-17 check exceptions for all methods
     // TODO: 01-Jul-17 check user availability in all methods
 }
