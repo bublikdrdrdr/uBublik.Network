@@ -201,8 +201,10 @@ public class UserController {
             return ResponseEntity.notFound().build();
         } catch (UnauthorizedException ue){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
-        } catch (IllegalArgumentException iae){
+        } catch (IllegalArgumentException iae) {
             return ResponseEntity.badRequest().body(iae.getMessage());
+        } catch (DisabledUserException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (HibernateException he){
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
         } catch (Exception e){

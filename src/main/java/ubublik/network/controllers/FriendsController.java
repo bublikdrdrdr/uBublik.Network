@@ -60,7 +60,7 @@ public class FriendsController {
                                          @RequestParam(name = "offset", required = false) Integer offset,
                                          @RequestParam(name = "size", required = false) Integer size){
         try{
-            UserList userList = apiService.getMyFriends(new PagingRequest(id, offset, size));
+            UserList userList = apiService.getUserFriends(new PagingRequest(id, offset, size));
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userList);
         } catch (UnauthorizedException ue){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ue.getMessage());
@@ -68,9 +68,9 @@ public class FriendsController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(due.getMessage());
         } catch (InvalidPrincipalException ipe) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ipe.getMessage());
-        } catch (AuthorizedEntityNotFoundException aenfe) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(aenfe.getMessage());
-        } catch (EntityNotFoundException enfe){
+        } catch (AuthorizedEntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (UserNotFoundException e){
             return ResponseEntity.notFound().build();
         } catch (HibernateException he){
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
