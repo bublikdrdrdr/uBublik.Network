@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ubublik.network.exceptions.DisabledUserException;
 import ubublik.network.exceptions.EntityNotFoundException;
 import ubublik.network.exceptions.UserNotFoundException;
 import ubublik.network.rest.entities.Image;
@@ -50,8 +51,10 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(userImagesList);
         } catch (UserNotFoundException unfe){
             return ResponseEntity.notFound().build();
-        } catch (HibernateException he){
+        } catch (HibernateException he) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (DisabledUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
