@@ -24,13 +24,13 @@ public class ProfileDao{
 
 
     public Profile getProfileById(long id)throws IllegalArgumentException {
-        if (id<1) throw new IllegalArgumentException("Id starts from 1, idiot...");//debiloodporne :)
+        Session session = HibernateUtil.getSession();
         try {
-            Session session = HibernateUtil.getSession();
             Profile profile = session.get(Profile.class, id);
-            //if (profile==null) throw new NoSuchElementException("Profile not found");
+            session.close();
             return profile;
-        } catch (Exception e){
+        } catch (Exception e) {
+            session.close();
             throw e;
         }
     }
@@ -46,11 +46,10 @@ public class ProfileDao{
             Transaction transaction = session.beginTransaction();
             session.save(profile);
             transaction.commit();
-        } catch (Exception e)
-        {
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -62,11 +61,11 @@ public class ProfileDao{
             Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
             long id = (long)session.save(profile);
             transaction.commit();
-            return id;
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -76,10 +75,10 @@ public class ProfileDao{
             Transaction transaction = session.beginTransaction();
             session.remove(profile);
             transaction.commit();
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 }

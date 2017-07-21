@@ -22,16 +22,19 @@ import java.util.NoSuchElementException;
 public class RoleDao {
 
     public List<Role> getRoles(){
+        Session session = HibernateUtil.getSession();
         try {
-            Session session = HibernateUtil.getSession();
+
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Role> criteriaQuery = criteriaBuilder.createQuery(Role.class);
             Root<Role> root = criteriaQuery.from(Role.class);
             criteriaQuery.select(root);
             List<Role> roles = session.createQuery(criteriaQuery).list();
+            session.close();
             return roles;
-        } catch (Exception e){
-            return null;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -41,8 +44,7 @@ public class RoleDao {
         Iterator<Role> iterator = roles.iterator();
         while (iterator.hasNext()){
             Role temp = iterator.next();
-            if (temp.getName().equals(roleName))
-            {
+            if (temp.getName().equals(roleName)){
                 return temp;
             }
         }

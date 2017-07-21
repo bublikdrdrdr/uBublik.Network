@@ -1,12 +1,17 @@
 package ubublik.network.controllers;
 
+import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ubublik.network.rest.entities.PagingRequest;
+import ubublik.network.exceptions.DisabledUserException;
+import ubublik.network.exceptions.UnauthorizedException;
+import ubublik.network.rest.entities.Report;
+import ubublik.network.rest.entities.Status;
 import ubublik.network.services.ApiService;
 
 import java.util.TreeMap;
@@ -16,6 +21,7 @@ import java.util.TreeMap;
  */
 @RestController
 public class MainController {
+    // TODO: 20-Jul-17 add javadocs
 
     @Autowired
     ApiService apiService;
@@ -24,10 +30,10 @@ public class MainController {
      * API service information
      * @return Version with 200 http code
      */
-    @RequestMapping("/api")
+    @RequestMapping(value = "/api", method = RequestMethod.GET)
     public ResponseEntity<Object> api(){
         TreeMap<String, Object> map = new TreeMap<>();
-        map.put("version", "0.1A");
+        map.put("version", "0.2A");
         map.put("service-name", "uBublik.Network");
         map.put("author", "Vadym Borys");
         map.put("version-time", 1499609954577L);
@@ -35,16 +41,19 @@ public class MainController {
         return ResponseEntity.ok(map);
     }
 
-    @RequestMapping(value = "/test", method = RequestMethod.GET)
-    public Object test(@RequestParam(name = "offset") int offset, @RequestParam(name = "size") int size) throws Exception{
-        long t = System.currentTimeMillis();
-       // UserList fr = apiService.getMyFriends(new PagingRequest(4L, 0L, 1l));
-        //Object o = apiService.getUserFriends(new PagingRequest(4L,null, null));
-        Object o = apiService.getDialogs(new PagingRequest(null, offset , size));
-                // apiService.getImage(3);
-        System.out.println(System.currentTimeMillis()-t);
-        return o;
-        //Image image = new  Image(new byte[]{0,1,2,3}, false, null, userDao.getUserByNickname("bublik") , new Date());
-       // imageDao.addImage(image);
+    @RequestMapping(value = "/report", method = RequestMethod.POST)
+    public ResponseEntity report(@RequestParam Report report){
+        try{
+            Status status = apiService.report(report);
+            return ResponseEntity.ok(status);
+        } catch (DisabledUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (HibernateException he){
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(he.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 }

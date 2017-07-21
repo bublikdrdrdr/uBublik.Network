@@ -27,11 +27,11 @@ public class ImageDao {
             Transaction transaction = session.beginTransaction();
             long id = (long)session.save(image);
             transaction.commit();
-            return id;
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -39,11 +39,11 @@ public class ImageDao {
         Session session = HibernateUtil.getSession();
         try{
             Image image = session.get(Image.class, id);
-            return image;
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+            return image;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -54,10 +54,10 @@ public class ImageDao {
             image.setRemoved(true);
             image.setData(null);//
             session.save(image);
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -71,11 +71,12 @@ public class ImageDao {
             criteriaQuery.where(criteriaBuilder.equal(profilePictureRoot.get("user"), user));
             criteriaQuery.select(profilePictureRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).setFirstResult(offset).setMaxResults(size).getResultList();
-        } catch (Exception e){
-            throw e;
-        } finally {
+            List<ProfilePicture> list = session.createQuery(criteriaQuery).setFirstResult(offset).setMaxResults(size).getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -87,22 +88,23 @@ public class ImageDao {
             image.setId(iid);
             ProfilePicture profilePicture = new ProfilePicture(image.getOwner(), image);
             long id = (long)session.save(profilePicture);
-            return id;
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
     public ProfilePicture getProfilePictureById(long id){
         Session session = HibernateUtil.getSession();
         try{
-             return session.get(ProfilePicture.class, id);
-        } catch (Exception e){
-            throw e;
-        } finally {
+             ProfilePicture profilePicture = session.get(ProfilePicture.class, id);
             session.close();
+            return profilePicture;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -113,10 +115,10 @@ public class ImageDao {
             session.remove(profilePicture);
             removeImage(profilePicture.getImage());
             transaction.commit();
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 }

@@ -46,11 +46,12 @@ public class UserDao{
     {
         Session session = HibernateUtil.getSession();
         try {
-            return session.get(User.class, id);
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            User user = session.get(User.class, id);
             session.close();
+            return user;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -60,12 +61,11 @@ public class UserDao{
             Transaction transaction = session.beginTransaction();
             long id = (long)session.save(user);
             transaction.commit();
-            return id;
-        } catch (Exception e)
-        {
-            throw e;
-        } finally {
             session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -82,7 +82,11 @@ public class UserDao{
             session.close();
             return user;
         } catch (NoResultException nre){
+            session.close();
             throw new UsernameNotFoundException("Username not found");
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -118,24 +122,29 @@ public class UserDao{
         userData.setPassword(passwordHash);
 
         Session session = HibernateUtil.getSession();
-        User user = new User(
-                userData.getNickname(),
-                userData.getName(),
-                userData.getSurname(),
-                userData.getPassword(),
-                roles,
-                true,
-                new Date(),
-                null);
-        Transaction transaction = session.beginTransaction();
-        long id = (long) session.save(user);//save user, because we need this object to create profile
-        if (withProfile) {
-            Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
-            session.save(profile);//save profile
+        try {
+            User user = new User(
+                    userData.getNickname(),
+                    userData.getName(),
+                    userData.getSurname(),
+                    userData.getPassword(),
+                    roles,
+                    true,
+                    new Date(),
+                    null);
+            Transaction transaction = session.beginTransaction();
+            long id = (long) session.save(user);//save user, because we need this object to create profile
+            if (withProfile) {
+                Profile profile = new Profile(user, null, null, null, Gender.NULL, null);
+                session.save(profile);//save profile
+            }
+            transaction.commit();
+            session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
-        transaction.commit();
-        session.close();
-        return id;
     }
 
     public long registerAdmin(User user) throws UserDataFormatException, DuplicateUsernameException {
@@ -156,9 +165,8 @@ public class UserDao{
     }
 
     public int searchCount(Search search){
-        Session session = HibernateUtil.getSession();
+        EntityManager em = HibernateUtil.getEntityManager();
         try {
-            EntityManager em = session.getEntityManagerFactory().createEntityManager();
             String sql = ("SELECT u FROM User u\n" +
                     "     WHERE (1=1)");
             if (search.getName()!=null){
@@ -196,18 +204,18 @@ public class UserDao{
             }
             query.setFirstResult(search.getOffset());
             query.setMaxResults(search.getSize());
-            return ((Long)query.getSingleResult()).intValue();
+            int result = ((Long)query.getSingleResult()).intValue();
+            em.close();
+            return result;
         } catch (Exception e) {
+            em.close();
             throw e;
-        } finally {
-            session.close();
         }
     }
 
     public List<User> searchUsers(Search search){
-        Session session = HibernateUtil.getSession();
+        EntityManager em = HibernateUtil.getEntityManager();
         try {
-            EntityManager em = session.getEntityManagerFactory().createEntityManager();
             String sql = ("SELECT u FROM User u\n" +
                     "     WHERE (1=1)");
             if (search.getName()!=null){
@@ -268,16 +276,17 @@ public class UserDao{
             }
             query.setFirstResult(search.getOffset());
             query.setMaxResults(search.getSize());
-            return (List<User>) query.getResultList();
+            List<User> list = query.getResultList();
+            em.close();
+            return list;
         } catch (Exception e) {
+            em.close();
             throw e;
-        } finally {
-            session.close();
         }
     }
     
     public User getReportAdmin(){
-        return null;// TODO: 08-Jul-17  
+        return null;// TODO: 08-Jul-17
     }
 
 }

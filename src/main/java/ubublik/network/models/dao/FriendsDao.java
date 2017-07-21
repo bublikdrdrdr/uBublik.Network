@@ -35,11 +35,12 @@ public class FriendsDao {
     public FriendRelation getFriendRelationById(long id) throws HibernateException{
         Session session = HibernateUtil.getSession();
         try{
-            return session.get(FriendRelation.class, id);
-        } catch (Exception e){
-            throw e;
-        } finally {
+            FriendRelation friendRelation =  session.get(FriendRelation.class, id);
             session.close();
+            return friendRelation;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -57,15 +58,18 @@ public class FriendsDao {
             );
             criteriaQuery.select(friendRelationRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getSingleResult();
+            FriendRelation friendRelation = session.createQuery(criteriaQuery).getSingleResult();
+            session.close();
+            return friendRelation;
         } catch (NoResultException nre) {
+            session.close();
             return null;
         } catch (NonUniqueResultException nure){
+            session.close();
             throw new HibernateException("getFriendRelation method error");
         } catch (Exception e) {
-            throw e;
-        } finally {
             session.close();
+            throw e;
         }
     }
 
@@ -75,11 +79,11 @@ public class FriendsDao {
             Transaction transaction = session.beginTransaction();
             long id =  (long)session.save(friendRelation);
             transaction.commit();
+            session.close();
             return id;
         } catch (Exception e) {
-            throw e;
-        } finally {
             session.close();
+            throw e;
         }
     }
 
@@ -89,10 +93,10 @@ public class FriendsDao {
             Transaction transaction = session.beginTransaction();
             session.remove(friendRelation);
             transaction.commit();
-        } catch (Exception e) {
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -111,11 +115,12 @@ public class FriendsDao {
             );
             criteriaQuery.select(friendRelationRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<FriendRelation> list = session.createQuery(criteriaQuery).getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -128,11 +133,12 @@ public class FriendsDao {
             criteriaQuery.where(criteriaBuilder.equal(friendRelationRoot.get("sender"), user));
             criteriaQuery.select(friendRelationRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<FriendRelation> list = session.createQuery(criteriaQuery).getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -145,11 +151,12 @@ public class FriendsDao {
             criteriaQuery.where(criteriaBuilder.equal(friendRelationRoot.get("receiver"), user));
             criteriaQuery.select(friendRelationRoot);
             criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<FriendRelation> list = session.createQuery(criteriaQuery).getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -168,11 +175,12 @@ public class FriendsDao {
             }
             Query query = em.createQuery(sql);
             query.setParameter("user", user);
-            return ((Long)query.getSingleResult()).intValue();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            int result = ((Long)query.getSingleResult()).intValue();
             session.close();
+            return result;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -194,11 +202,12 @@ public class FriendsDao {
             query.setParameter("user", user);
             query.setFirstResult(pagingRequest.getOffset());
             query.setMaxResults(pagingRequest.getSize());
-            return (List<User>) query.getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<User> list = (List<User>) query.getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -217,11 +226,12 @@ public class FriendsDao {
             }
             Query query = em.createQuery(sql);
             query.setParameter("user", user);
-            return ((Long)query.getSingleResult()).intValue();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            int result = ((Long)query.getSingleResult()).intValue();
             session.close();
+            return result;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -243,11 +253,12 @@ public class FriendsDao {
             query.setParameter("user", user);
             query.setFirstResult(pagingRequest.getOffset());
             query.setMaxResults(pagingRequest.getSize());
-            return (List<User>) query.getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<User> list = (List<User>) query.getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -260,11 +271,11 @@ public class FriendsDao {
             query.setParameter("user1", user1);
             query.setParameter("user2", user2);
             long res = (Long)query.getSingleResult();
+            session.close();
             return res == 2L;
         } catch (Exception e) {
-            throw e;
-        } finally {
             session.close();
+            throw e;
         }
     }
 
@@ -276,11 +287,12 @@ public class FriendsDao {
                     "     JOIN FriendRelation sfr on sfr.receiver=ffr.sender and sfr.sender=ffr.receiver\n" +
                     "     WHERE ffr.sender= :id AND ffr.receiver=sfr.sender");
             query.setParameter("id", user);
-            return ((Long)query.getSingleResult()).intValue();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            int result = ((Long)query.getSingleResult()).intValue();
             session.close();
+            return result;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -295,11 +307,12 @@ public class FriendsDao {
             query.setParameter("id", user);
             query.setFirstResult(offset);
             query.setMaxResults(count);
-            return (List<User>) query.getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<User> list = (List<User>) query.getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -346,11 +359,12 @@ public class FriendsDao {
             {
                 query.setParameter("gender", search.getGenderObject());
             }
-            return ((Long)query.getSingleResult()).intValue();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            int result = ((Long)query.getSingleResult()).intValue();
             session.close();
+            return result;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -424,63 +438,14 @@ public class FriendsDao {
             }
             query.setFirstResult(search.getOffset());
             query.setMaxResults(search.getSize());
-            return (List<User>) query.getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
+            List<User> list = (List<User>) query.getResultList();
             session.close();
+            return list;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
-
-  /*  public List<User> getUserFriendsV3(User user){
-        Session session = HibernateUtil.getSession();
-        try{
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<FriendRelation> criteriaQuery = criteriaBuilder.createQuery(FriendRelation.class);
-            Root<FriendRelation> ffr = criteriaQuery.from(FriendRelation.class);
-            Join<FriendRelation, User> uj = ffr.join("sender");
-            Join<FriendRelation, User> sfs = uj.join("receiver");
-            sfs.on(
-                    criteriaBuilder.and(
-                            criteriaBuilder.equal(sfs.get("receiver"), ffr.get("sender")),
-                            criteriaBuilder.equal(sfs.get("sender"), ffr.get("receiver"))
-                    )
-            );
-            criteriaQuery.where(
-                    criteriaBuilder.and(
-                            criteriaBuilder.equal(ffr.get("receiver"), sfs.get("sender")),
-                            criteriaBuilder.equal(ffr.get("sender"), user)
-                    )
-            );
-            criteriaQuery.select(ffr);
-            criteriaQuery.distinct(true);
-            return session.createQuery(criteriaQuery).getResultList();
-        } catch (Exception e){
-            throw e;
-        } finally {
-            session.close();
-        }
-    }*/
-
-  /*  public boolean haveFriendRelation(User user1, User user2){
-        Session session = HibernateUtil.getSession();
-        try {
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            session.
-            CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
-            Root<FriendRelation> friendRelationRoot = criteriaQuery.from(FriendRelation.class);
-            Join<FriendRelation, User> userSenderJoin = friendRelationRoot.join("sender");
-
-            criteriaQuery.select(criteriaBuilder.count(friendRelationRoot));
-            criteriaQuery.distinct(true);
-
-            return session.createQuery(criteriaQuery).getResultList();
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            session.close();
-        }
-    }*/
 
 
 }

@@ -7,34 +7,56 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ubublik.network.exceptions.*;
-import ubublik.network.rest.entities.PagingRequest;
-import ubublik.network.rest.entities.Post;
-import ubublik.network.rest.entities.PostList;
 import ubublik.network.rest.entities.Status;
+import ubublik.network.rest.entities.User;
+import ubublik.network.rest.entities.UserDetails;
+import ubublik.network.rest.entities.UserRegistration;
 import ubublik.network.services.ApiService;
 
-import java.util.Objects;
+import static ubublik.network.security.SecurityConfig.HAS_ADMIN_ROLE;
 
-import static ubublik.network.security.SecurityConfig.HAS_USER_ROLE;
 
 /**
  * Created by Bublik on 20-Jul-17.
  */
 @RestController
-@RequestMapping("/api")
-public class PostController {
+@RequestMapping(value = "/api/admin")
+public class AdminController {
 
     @Autowired
     ApiService apiService;
 
-    @PreAuthorize(HAS_USER_ROLE)
-    @RequestMapping(value = "/users/{id}/posts", method = RequestMethod.GET)
-    public ResponseEntity getUserPosts(@PathVariable(name = "id") Long id,
-                                       @RequestParam(name = "offset", required = false) Integer offset,
-                                       @RequestParam(name = "size", required = false) Integer size) {
+    @PreAuthorize(HAS_ADMIN_ROLE)
+    @RequestMapping(value = "/users/{id}/profile", method = RequestMethod.POST)
+    public ResponseEntity addProfile(@PathVariable("id") Long id,
+                                     @RequestParam("details") UserDetails userDetails) {
         try {
-            PostList postList = apiService.getUserPosts(new PagingRequest(id, offset, size));
-            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(postList);
+            userDetails.setId(id);
+            Status status = apiService.addProfile(userDetails);
+            return ResponseEntity.ok(status);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (DisabledUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (NetworkLogicException e){
+            return ResponseEntity.unprocessableEntity().body(e.getStatus());
+        } catch (HibernateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_ADMIN_ROLE)
+    @RequestMapping(value = "/users/{id}/block", method = RequestMethod.POST)
+    public ResponseEntity blockUser(@PathVariable("id") Long id) {
+        try {
+            Status status = apiService.blockUser(id);
+            return ResponseEntity.ok(status);
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (UserNotFoundException e) {
@@ -50,77 +72,72 @@ public class PostController {
         }
     }
 
-    @PreAuthorize(HAS_USER_ROLE)
-    @RequestMapping(value = "/users/{user_id}/posts/{post_id}", method = RequestMethod.GET)
-    public ResponseEntity getUserPosts(@PathVariable(name = "user_id") Long userId,
-                                       @PathVariable(name = "post_id") Long postId) {
+    @PreAuthorize(HAS_ADMIN_ROLE)
+    @RequestMapping(value = "/users/{id}/unblock", method = RequestMethod.POST)
+    public ResponseEntity unblockUser(@PathVariable("id") Long id) {
         try {
-            Post post = apiService.getPost(postId);
-            if (!Objects.equals(post.getUser_id(), userId))
-                throw new NetworkLogicException("User is not an owner of this post");
-            return ResponseEntity.ok(post);
-        } catch (AuthorizedEntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (DisabledUserException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (UnauthorizedException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (NetworkLogicException e) {
-            return ResponseEntity.unprocessableEntity().body(e.getMessage());
-        } catch (HibernateException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @PreAuthorize(HAS_USER_ROLE)
-    @RequestMapping(value = "/posts", method = RequestMethod.POST)
-    public ResponseEntity addPost(@RequestParam("post") Post post){
-        try{
-            Post responsePost = apiService.addPost(post);
-            return ResponseEntity.ok(responsePost);
-        } catch (AuthorizedEntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (DisabledUserException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (UnauthorizedException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (HibernateException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @PreAuthorize(HAS_USER_ROLE)
-    @RequestMapping(value = "/posts/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity addPost(@PathVariable("id") Long id){
-        try{
-            Status status = apiService.removePost(id);
+            Status status = apiService.unblockUser(id);
             return ResponseEntity.ok(status);
-        } catch (AuthorizedEntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
         } catch (DisabledUserException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
         } catch (HibernateException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
+    @PreAuthorize(HAS_ADMIN_ROLE)
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    public ResponseEntity registerAdmin(@RequestParam(name = "data")UserRegistration userRegistration) {
+        try {
+            User user = apiService.registerAdmin(userRegistration);
+            return ResponseEntity.ok(user);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (DuplicateUsernameException e) {
+            return ResponseEntity.unprocessableEntity().body(e.getMessage());
+        } catch (DisabledUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (UserDataFormatException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (HibernateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize(HAS_ADMIN_ROLE)
+    @RequestMapping(value = "/users/{id}/profile", method = RequestMethod.DELETE)
+    public ResponseEntity removeProfile(@PathVariable("id") Long id) {
+        try {
+            Status status = apiService.removeProfile(id);
+            return ResponseEntity.ok(status);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (DisabledUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (NetworkLogicException e){
+            return ResponseEntity.unprocessableEntity().body(e.getStatus());
+        } catch (HibernateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+
 }

@@ -92,7 +92,7 @@ public interface ApiService {
 
     //admins only
     Status addProfile(UserDetails userDetails) throws AuthorizedEntityNotFoundException, UnauthorizedException,
-            InvalidPrincipalException, AccessDeniedException, DisabledUserException, UserNotFoundException;
+            InvalidPrincipalException, AccessDeniedException, DisabledUserException, UserNotFoundException, NetworkLogicException;
 
     Status blockUser(long id) throws AuthorizedEntityNotFoundException, UnauthorizedException,
             InvalidPrincipalException, AccessDeniedException, DisabledUserException, UserNotFoundException;

@@ -528,7 +528,7 @@ public class ApiServiceImpl implements ApiService{
         List<ubublik.network.models.Image> images = new ArrayList<>();
         for (Long imageId:post.getImages()) {
             ubublik.network.models.Image current = imageDao.getImageById(imageId);
-            if (current==null) throw new EntityNotFoundException("Wrong image id");
+            if (current==null) throw new EntityNotFoundException("Image not found");
             images.add(current);
         }
         long id = postDao.savePost(new ubublik.network.models.Post(
@@ -565,14 +565,14 @@ public class ApiServiceImpl implements ApiService{
     }
 
     @Override
-    public Status addProfile(UserDetails userDetails) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, DisabledUserException, UserNotFoundException {
+    public Status addProfile(UserDetails userDetails) throws AuthorizedEntityNotFoundException, UnauthorizedException, InvalidPrincipalException, AccessDeniedException, DisabledUserException, UserNotFoundException, NetworkLogicException {
         ubublik.network.models.security.User me = getMySecurityUser();
         if (!me.isEnabled()) throw new DisabledUserException("User is disabled");
         if (isAdmin(me)) throw new AccessDeniedException("Only admin can add profiles");
         ubublik.network.models.security.User user = userDao.getUserById(userDetails.getId());
         if (user==null) throw new UserNotFoundException("User not found");
         if (!user.isEnabled()) throw new DisabledUserException("User is disabled");
-        if (user.getProfile()!=null) return StatusFactory.getStatus(USER_HAS_PROFILE);
+        if (user.getProfile()!=null) throw new NetworkLogicException(StatusFactory.getStatus(USER_HAS_PROFILE));
         profileDao.createProfileForUser(user);
         user = userDao.getUserById(user.getId());
         Gender gender;
@@ -655,6 +655,4 @@ public class ApiServiceImpl implements ApiService{
             if (Objects.equals(role.getId(), adminRole.getId())) return true;
         return false;
     }
-
-    // TODO: 01-Jul-17 check user availability in all methods
 }

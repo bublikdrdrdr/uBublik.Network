@@ -17,11 +17,13 @@ import java.util.List;
 public class PostDao {
 
     public Post getPostById(long id)throws IllegalArgumentException {
+        Session session = HibernateUtil.getSession();
         try {
-            Session session = HibernateUtil.getSession();
             Post post = session.get(Post.class, id);
+            session.close();
             return post;
-        } catch (Exception e){
+        } catch (Exception e) {
+            session.close();
             throw e;
         }
     }
@@ -32,11 +34,11 @@ public class PostDao {
             Transaction transaction = session.beginTransaction();
             long id = (long)session.save(post);
             transaction.commit();
-            return id;
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+            return id;
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
@@ -46,32 +48,46 @@ public class PostDao {
             Transaction transaction = session.beginTransaction();
             session.remove(post);
             transaction.commit();
-        } catch (Exception e){
-            throw e;
-        } finally {
             session.close();
+        } catch (Exception e) {
+            session.close();
+            throw e;
         }
     }
 
-    public List<Post> getUserPosts(User user, int offset, int size){
+    public List<Post> getUserPosts(User user, int offset, int size) {
         EntityManager em = HibernateUtil.getEntityManager();
-        String sql = "SELECT * FROM Post p\n" +
-                "WHERE \n" +
-                "p.user=:user" +
-                "ORDER BY p.id desc";
-        Query query = em.createQuery(sql, Post.class);
-        query.setParameter("user", user);
-        query.setFirstResult(offset);
-        query.setMaxResults(size);
-        return query.getResultList();
+        try {
+            String sql = "SELECT * FROM Post p\n" +
+                    "WHERE \n" +
+                    "p.user=:user" +
+                    "ORDER BY p.id desc";
+            Query query = em.createQuery(sql, Post.class);
+            query.setParameter("user", user);
+            query.setFirstResult(offset);
+            query.setMaxResults(size);
+            List<Post> list = query.getResultList();
+            em.close();
+            return list;
+        } catch (Exception e) {
+            em.close();
+            throw e;
+        }
     }
 
-    public int getUserPostsCount(User user){
+    public int getUserPostsCount(User user) {
         Session session = HibernateUtil.getSession();
-        Query query = session.createQuery("SELECT COUNT(p.id) FROM Post" +
-                "WHERE p.user=:user" +
-                "ORDER BY p.id desc");
-        query.setParameter("user", user);
-        return ((Number)query.getSingleResult()).intValue();
+        try {
+            Query query = session.createQuery("SELECT COUNT(p.id) FROM Post" +
+                    "WHERE p.user=:user" +
+                    "ORDER BY p.id desc");
+            query.setParameter("user", user);
+            int result = ((Number) query.getSingleResult()).intValue();
+            session.close();
+            return result;
+        } catch (Exception e) {
+            session.close();
+            throw e;
+        }
     }
 }
